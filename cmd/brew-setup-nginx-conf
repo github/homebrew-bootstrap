@@ -12,7 +12,7 @@ else
 end
 
 name = ARGV.shift
-root = File.expand_path ARGV.shift
+root = ARGV.shift
 
 input = ARGV.shift
 
@@ -24,6 +24,7 @@ unless input.end_with? ".erb"
   abort "Error: #{input} is not a .erb file!"
 end
 
+root = File.expand_path root
 data = IO.read input
 conf = ERB.new(data).result
 output = input.sub /.erb$/, ""
