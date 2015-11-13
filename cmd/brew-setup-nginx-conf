@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+# Generates and installs a project nginx configuration using erb.
+require "erb"
+
+root_configuration = ARGV.delete "--root"
+if root_configuration
+  http_port = 80
+  https_port = 443
+else
+  http_port = 8080
+  https_port = 8443
+end
+
+name = ARGV.shift
+root = File.expand_path ARGV.shift
+
+input = ARGV.shift
+
+if !name || !root || !input
+  abort "Usage: brew generate-nginx-conf [--root] <project_name> <project_root_path> <nginx.conf.erb>"
+end
+
+unless input.end_with? ".erb"
+  abort "Error: #{input} is not a .erb file!"
+end
+
+data = IO.read input
+conf = ERB.new(data).result
+output = input.sub /.erb$/, ""
+output.sub! /.conf$/, ".root.conf" if root_configuration
+IO.write output, conf
+
+if !root_configuration && !ENV["BOXEN_HOME"]
+  homebrew_prefix = `brew --prefix`.chomp
+  system "ln -sf '#{output}' '#{homebrew_prefix}/etc/nginx/servers/#{name}'"
+  system "brew services restart nginx"
+end

@@ -1,0 +1,40 @@
+#!/bin/bash
+# Installs Ruby and Bundler.
+set -e
+
+BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if ! which rbenv &>/dev/null; then
+  echo "Error: you need to install 'rbenv' and put it in your PATH!" 1>&2
+  exit 1
+fi
+
+if ! rbenv version-name &>/dev/null; then
+  RUBY_REQUESTED="$(rbenv local)"
+  RUBY_DEFINITION="$(ruby-build --definitions | grep "^$RUBY_REQUESTED$")"
+
+  if [ -z "$RUBY_DEFINITION" ]; then
+    RUBY_DEFINITION="$BASE_PATH/ruby-definitions/$RUBY_REQUESTED"
+
+    if ! [ -f "$RUBY_DEFINITION" ]; then
+      echo "Error: cannot find Ruby $RUBY_REQUESTED definition file at:" 1>&2
+      echo "$RUBY_DEFINITION" 1>&2
+      exit 1
+    fi
+  fi
+
+  HOMEBREW_PREFIX="$(brew --prefix)"
+  export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$HOMEBREW_PREFIX/opt/openssl"
+
+  rbenv install --skip-existing "$RUBY_DEFINITION"
+  if [ "$(rbenv exec ruby --version)" != "$(ruby --version)" ]; then
+    echo "You need to add rbenv to your .bash_profile/.bashrc/.zshrc!" 1>&2
+    echo "https://github.com/sstephenson/rbenv#basic-github-checkout" 1>&2
+    exit 1
+  fi
+fi
+
+(which bundle &>/dev/null && bundle -v &>/dev/null) || {
+  gem install bundler
+  rbenv rehash
+}

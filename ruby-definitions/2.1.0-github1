@@ -1,0 +1,3 @@
+install_package "yaml-0.1.6" "http://pyyaml.org/download/libyaml/yaml-0.1.6.tar.gz#5fe00cda18ca5daeb43762b80c38e06e" --if needs_yaml
+install_package "openssl-1.0.1h" "https://www.openssl.org/source/openssl-1.0.1h.tar.gz#8d6d684a9430d5cc98a62a5d8fbda8cf" mac_openssl --if has_broken_mac_openssl
+install_package "ruby-2.1.0-github1" "https://s3.amazonaws.com/boxen-downloads/ruby-build/ruby-2.1.0-github1.tar.gz#a8b528f2e0d5ecf55893002078014beb" ldflags_dirs autoconf standard verify_openssl
