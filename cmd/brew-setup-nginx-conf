@@ -25,6 +25,8 @@ unless input.end_with? ".erb"
 end
 
 root = File.expand_path root
+input = File.expand_path input
+
 data = IO.read input
 conf = ERB.new(data).result
 output = input.sub /.erb$/, ""
@@ -32,7 +34,13 @@ output.sub! /.conf$/, ".root.conf" if root_configuration
 IO.write output, conf
 
 if !root_configuration && !ENV["BOXEN_HOME"]
-  homebrew_prefix = `brew --prefix`.chomp
-  system "ln -sf '#{output}' '#{homebrew_prefix}/etc/nginx/servers/#{name}'"
+  homebrew_prefix = `brew --prefix 2>/dev/null`.chomp
+  abort "Error: cannot find Homebrew!" unless $?.success?
+
+  server = "#{homebrew_prefix}/etc/nginx/servers/#{name}"
+  system "ln -sf '#{output}' '#{server}'"
+  abort "Error: failed to symlink #{output} to #{server}!" unless $?.success?
+
   system "brew services restart nginx"
+  abort "Error: failed to restart nginx!" unless $?.success?
 end

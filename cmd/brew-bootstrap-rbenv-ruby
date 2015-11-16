@@ -2,24 +2,44 @@
 # Installs Ruby and Bundler.
 set -e
 
+if [ "$1" = "--debug" ]; then
+  shift
+  PRINT_DEBUG="1"
+  set -x
+fi
+
+cleanup() {
+  set +e
+  if [ -n "$EXPECTED_EXIT" ]; then
+    return
+  fi
+  echo "Error: $(basename $0) failed!" >&2
+  if [ -z "$PRINT_DEBUG" ]; then
+    echo "Run '$0 --debug' for debugging output.\n" \
+      "If you're stuck: file an issue with debugging output at:\n" \
+      "  https://github.com/github/homebrew-bootstrap/issues/new" >&2
+  fi
+}
+trap "cleanup" EXIT
+
+abort() { EXPECTED_EXIT="1"; echo "$@" >&2; exit 1; }
+
 BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if ! which rbenv &>/dev/null; then
-  echo "Error: you need to install 'rbenv' and put it in your PATH!" 1>&2
-  exit 1
+  abort "Error: you need to install 'rbenv' and put it in your PATH!"
 fi
 
 if ! rbenv version-name &>/dev/null; then
   RUBY_REQUESTED="$(rbenv local)"
-  RUBY_DEFINITION="$(ruby-build --definitions | grep "^$RUBY_REQUESTED$")"
+  RUBY_DEFINITION="$(ruby-build --definitions | grep "^$RUBY_REQUESTED$" || true)"
 
   if [ -z "$RUBY_DEFINITION" ]; then
     RUBY_DEFINITION="$BASE_PATH/ruby-definitions/$RUBY_REQUESTED"
 
     if ! [ -f "$RUBY_DEFINITION" ]; then
-      echo "Error: cannot find Ruby $RUBY_REQUESTED definition file at:" 1>&2
-      echo "$RUBY_DEFINITION" 1>&2
-      exit 1
+      abort "Error: cannot find Ruby $RUBY_REQUESTED definition file at:\n" \
+        "$RUBY_DEFINITION"
     fi
   fi
 
@@ -28,9 +48,8 @@ if ! rbenv version-name &>/dev/null; then
 
   rbenv install --skip-existing "$RUBY_DEFINITION"
   if [ "$(rbenv exec ruby --version)" != "$(ruby --version)" ]; then
-    echo "You need to add rbenv to your .bash_profile/.bashrc/.zshrc!" 1>&2
-    echo "https://github.com/sstephenson/rbenv#basic-github-checkout" 1>&2
-    exit 1
+    abort "You need to add rbenv to your .bash_profile/.bashrc/.zshrc!\n" \
+      "https://github.com/sstephenson/rbenv#basic-github-checkout"
   fi
 fi
 
@@ -38,3 +57,6 @@ fi
   gem install bundler
   rbenv rehash
 }
+
+EXPECTED_EXIT="1"
+exit 0
