@@ -38,7 +38,7 @@ if !root_configuration && !ENV["BOXEN_HOME"]
   abort "Error: cannot find Homebrew!" unless $?.success?
 
   server = "#{homebrew_prefix}/etc/nginx/servers/#{name}"
-  system "ln -sf '#{output}' '#{server}'"
+  system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
   abort "Error: failed to symlink #{output} to #{server}!" unless $?.success?
 
   system "brew services restart nginx"
