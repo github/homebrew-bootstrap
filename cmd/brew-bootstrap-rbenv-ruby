@@ -50,7 +50,7 @@ if ! rbenv version-name &>/dev/null; then
 
   rbenv install --skip-existing "$RUBY_DEFINITION"
   if [ "$(rbenv exec ruby --version)" != "$(ruby --version)" ]; then
-    warn  "You need to add rbenv to your .bash_profile/.bashrc/.zshrc!" \
+    warn  "You need to add rbenv to your .bash_profile/.bashrc/.zshrc!"
     abort "https://github.com/sstephenson/rbenv#basic-github-checkout"
   fi
 fi
