@@ -8,21 +8,23 @@ if [ "$1" = "--debug" ]; then
   set -x
 fi
 
+warn() { echo "$@" >&2; }
+abort() { EXPECTED_EXIT="1"; warn "$@"; exit 1; }
+
 cleanup() {
   set +e
   if [ -n "$EXPECTED_EXIT" ]; then
     return
   fi
-  echo "Error: $(basename $0) failed!" >&2
+  warn "Error: $(basename $0) failed!"
   if [ -z "$PRINT_DEBUG" ]; then
-    echo "Run '$0 --debug' for debugging output.\n" \
-      "If you're stuck: file an issue with debugging output at:\n" \
-      "  https://github.com/github/homebrew-bootstrap/issues/new" >&2
+    warn "For debugging output run:"
+    warn "  $0 --debug"
+    warn "If you're stuck: file an issue with debugging output at:"
+    warn "  https://github.com/github/homebrew-bootstrap/issues/new"
   fi
 }
 trap "cleanup" EXIT
-
-abort() { EXPECTED_EXIT="1"; echo "$@" >&2; exit 1; }
 
 BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -38,8 +40,8 @@ if ! rbenv version-name &>/dev/null; then
     RUBY_DEFINITION="$BASE_PATH/ruby-definitions/$RUBY_REQUESTED"
 
     if ! [ -f "$RUBY_DEFINITION" ]; then
-      abort "Error: cannot find Ruby $RUBY_REQUESTED definition file at:\n" \
-        "$RUBY_DEFINITION"
+      warn  "Error: cannot find Ruby $RUBY_REQUESTED definition file at:"
+      abort "$RUBY_DEFINITION"
     fi
   fi
 
@@ -48,8 +50,8 @@ if ! rbenv version-name &>/dev/null; then
 
   rbenv install --skip-existing "$RUBY_DEFINITION"
   if [ "$(rbenv exec ruby --version)" != "$(ruby --version)" ]; then
-    abort "You need to add rbenv to your .bash_profile/.bashrc/.zshrc!\n" \
-      "https://github.com/sstephenson/rbenv#basic-github-checkout"
+    warn  "You need to add rbenv to your .bash_profile/.bashrc/.zshrc!" \
+    abort "https://github.com/sstephenson/rbenv#basic-github-checkout"
   fi
 fi
 
