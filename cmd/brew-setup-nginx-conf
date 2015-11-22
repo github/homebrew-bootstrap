@@ -35,12 +35,12 @@ IO.write output, conf
 
 if !root_configuration && !ENV["BOXEN_HOME"]
   homebrew_prefix = `brew --prefix 2>/dev/null`.chomp
-  abort "Error: cannot find Homebrew!" unless $?.success?
+  if homebrew_prefix && !homebrew_prefix.empty?
+    server = "#{homebrew_prefix}/etc/nginx/servers/#{name}"
+    system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
+    abort "Error: failed to symlink #{output} to #{server}!" unless $?.success?
 
-  server = "#{homebrew_prefix}/etc/nginx/servers/#{name}"
-  system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
-  abort "Error: failed to symlink #{output} to #{server}!" unless $?.success?
-
-  system "brew services restart nginx"
-  abort "Error: failed to restart nginx!" unless $?.success?
+    system "brew services restart nginx"
+    abort "Error: failed to restart nginx!" unless $?.success?
+  end
 end
