@@ -29,7 +29,8 @@ trap "cleanup" EXIT
 BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if ! which rbenv &>/dev/null; then
-  abort "Error: you need to install 'rbenv' and put it in your PATH!"
+  warn "Error: you need to install 'rbenv' and put it in your PATH!"
+  abort "https://github.com/rbenv/rbenv#homebrew-on-mac-os-x"
 fi
 
 if ! rbenv version-name &>/dev/null; then
