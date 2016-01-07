@@ -37,7 +37,7 @@ if ! nodenv version-name &>/dev/null; then
   NODE_REQUESTED="$(nodenv local)"
   NODE_DEFINITION="$(node-build --definitions | grep "^$NODE_REQUESTED$" || true)"
 
-  if ! [ -z "$NODE_DEFINITION" ]; then
+  if [ -z "$NODE_DEFINITION" ]; then
     abort  "Error: cannot find Node $NODE_DEFINITION definition!"
   fi
 
