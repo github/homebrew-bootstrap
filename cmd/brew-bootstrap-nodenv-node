@@ -41,7 +41,7 @@ if ! nodenv version-name &>/dev/null; then
     abort  "Error: cannot find Node $NODE_DEFINITION definition!"
   fi
 
-  nodenv install --skip-existing "$NODE_DEFINITION"
+  nodenv install "$NODE_DEFINITION"
 fi
 
 if [ "$(nodenv exec node --version)" != "$(node --version)" ]; then
