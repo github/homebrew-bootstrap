@@ -44,7 +44,7 @@ if ! nodenv version-name &>/dev/null; then
 fi
 
 if [ "$(nodenv exec node --version)" != "$(node --version)" ]; then
-  abort "You need to add 'eval "$(nodenv init -)"' to your .bash_profile/.bashrc/.zshrc!"
+  abort 'You need to add `eval "$(nodenv init -)"` to your .bash_profile/.bashrc/.zshrc!'
 fi
 
 EXPECTED_EXIT="1"
