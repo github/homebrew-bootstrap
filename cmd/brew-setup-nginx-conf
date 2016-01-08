@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # Generates and installs a project nginx configuration using erb.
 require "erb"
+require "pathname"
 
 root_configuration = ARGV.delete "--root"
 if root_configuration
@@ -12,9 +13,8 @@ else
 end
 
 name = ARGV.shift
-root = ARGV.shift
-
-input = ARGV.shift
+root = ARGV.shift || "."
+input = ARGV.shift || "config/dev/nginx.conf.erb"
 
 if !name || !root || !input
   abort "Usage: brew generate-nginx-conf [--root] <project_name> <project_root_path> <nginx.conf.erb>"
@@ -29,18 +29,27 @@ input = File.expand_path input
 
 data = IO.read input
 conf = ERB.new(data).result
-output = input.sub /.erb$/, ""
-output.sub! /.conf$/, ".root.conf" if root_configuration
+output = input.sub(/.erb$/, "")
+output.sub!(/.conf$/, ".root.conf") if root_configuration
 IO.write output, conf
 
-if !root_configuration && !ENV["BOXEN_HOME"]
-  homebrew_prefix = `brew --prefix 2>/dev/null`.chomp
-  if homebrew_prefix && !homebrew_prefix.empty?
-    server = "#{homebrew_prefix}/etc/nginx/servers/#{name}"
-    system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
-    abort "Error: failed to symlink #{output} to #{server}!" unless $?.success?
+exit if ENV["BOXEN_HOME"]
+exit if root_configuration
 
-    system "brew services restart nginx"
-    abort "Error: failed to restart nginx!" unless $?.success?
-  end
+/access_log (?<log>.+);/ =~ conf
+if log
+  log = Pathname(log)
+  log.dirname.mkpath
+  FileUtils.touch log unless log.exist?
 end
+
+homebrew_prefix = `brew --prefix 2>/dev/null`.chomp
+exit if !homebrew_prefix || homebrew_prefix.empty?
+
+server = "#{homebrew_prefix}/etc/nginx/servers/#{name}"
+system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
+abort "Error: failed to symlink #{output} to #{server}!" unless $?.success?
+
+system "brew prune"
+system "brew services restart nginx"
+abort "Error: failed to restart nginx!" unless $?.success?
