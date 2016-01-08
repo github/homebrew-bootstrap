@@ -29,8 +29,7 @@ trap "cleanup" EXIT
 BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if ! which rbenv &>/dev/null; then
-  warn "Error: you need to install 'rbenv' and put it in your PATH!"
-  abort "https://github.com/rbenv/rbenv#homebrew-on-mac-os-x"
+  abort "Error: you need to 'brew install rbenv'!"
 fi
 
 if ! rbenv version-name &>/dev/null; then
@@ -51,8 +50,7 @@ if ! rbenv version-name &>/dev/null; then
 
   rbenv install --skip-existing "$RUBY_DEFINITION"
   if [ "$(rbenv exec ruby --version)" != "$(ruby --version)" ]; then
-    warn  "You need to add rbenv to your .bash_profile/.bashrc/.zshrc!"
-    abort "https://github.com/sstephenson/rbenv#basic-github-checkout"
+    abort "You need to add 'eval "$(rbenv init -)"' to your .bash_profile/.bashrc/.zshrc!"
   fi
 fi
 

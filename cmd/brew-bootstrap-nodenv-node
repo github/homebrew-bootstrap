@@ -29,8 +29,7 @@ trap "cleanup" EXIT
 BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if ! which nodenv &>/dev/null; then
-  warn "Error: you need to install 'nodenv' and put it in your PATH!"
-  abort "https://github.com/OiNutter/nodenv#homebrew-on-mac-os-x"
+  abort "Error: you need to 'brew install nodenv'!"
 fi
 
 if ! nodenv version-name &>/dev/null; then
@@ -38,15 +37,14 @@ if ! nodenv version-name &>/dev/null; then
   NODE_DEFINITION="$(node-build --definitions | grep "^$NODE_REQUESTED$" || true)"
 
   if [ -z "$NODE_DEFINITION" ]; then
-    abort  "Error: cannot find Node $NODE_DEFINITION definition!"
+    abort "Error: cannot find Node $NODE_DEFINITION definition!"
   fi
 
   nodenv install "$NODE_DEFINITION"
 fi
 
 if [ "$(nodenv exec node --version)" != "$(node --version)" ]; then
-  warn  "You need to add nodenv to your .bash_profile/.bashrc/.zshrc!"
-  abort "https://github.com/OiNutter/nodenv#basic-github-checkout"
+  abort "You need to add 'eval "$(nodenv init -)"' to your .bash_profile/.bashrc/.zshrc!"
 fi
 
 EXPECTED_EXIT="1"
