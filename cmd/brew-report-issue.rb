@@ -2,11 +2,10 @@
 # Creates and closes issues on a project.
 close = !!ARGV.delete("--close")
 user_repo = ARGV.shift
-failure_source = ARGV.shift
-success_meta = failure_source
+message = ARGV.shift
 
-if user_repo.to_s.empty? || failure_source.to_s.empty?
-  abort "Usage: brew report-issue [--close] <user/repo> <failure-source|success-meta> [<STDIN piped body>]"
+if user_repo.to_s.empty? || message.to_s.empty?
+  abort "Usage: brew report-issue [--close] <user/repo> <message> [<STDIN piped body>]"
 end
 
 unless close
@@ -39,7 +38,7 @@ end
 require "net/http"
 require "json"
 
-def http_request(type, url, body=nil)
+def http_request type, url, body=nil
   uri = URI url
   request = if type == :post
     post_request = Net::HTTP::Post.new uri
@@ -50,56 +49,75 @@ def http_request(type, url, body=nil)
   end
   return unless request
   request.basic_auth @github_username, @github_password
-  Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+  Net::HTTP.start uri.hostname, uri.port, use_ssl: true  do |http|
     http.request request
   end
 end
 
-def response_check(response, action)
+def response_check response, action
   return if response.is_a? Net::HTTPSuccess
   STDERR.puts "Error: failed to #{action}!"
   unless response.body.empty?
-    failure = JSON.parse(response.body)
+    failure = JSON.parse response.body
     STDERR.puts "--\n#{response.code}: #{failure["message"] }"
   end
   exit 1
 end
 
-def json_escape(string)
-  JSON.generate(string, quirks_mode: true)
+def json_escape string
+  JSON.generate string, quirks_mode: true
 end
 
-if close
-  closed_issues_url = \
-    "https://api.github.com/repos/#{user_repo}/issues?filter=created"
-  response = http_request :get, closed_issues_url
-  response_check(response, "get issues (#{closed_issues_url})")
-
-  issues = JSON.parse response.body
-  issues.each do |issue|
-    comments_url = issue["comments_url"]
-    succeeded = json_escape "Succeeded at #{success_meta}."
-    issue_comment_json = "{ \"body\": #{succeeded} }"
-    response = http_request :post, comments_url, issue_comment_json
-    response_check(response, "create comment (#{comments_url})")
-
-    issue_url = issue["url"]
-    close_issue_json = '{ "state": "closed" }'
-    response = http_request :post, issue_url, close_issue_json
-    response_check(response, "close issue (#{issue_url})")
-  end
-else
-  title = json_escape "#{failure_source} failed for #{@github_username}"
-  body = json_escape issue_body.chomp
+def create_issue user_repo, title, body
+  title_json_string = json_escape title
+  body_json_string = json_escape body.chomp
   new_issue_json = <<-EOS
     {
-      "title": #{title},
-      "body":  #{body}
+      "title": #{title_json_string},
+      "body":  #{body_json_string}
     }
   EOS
   issues_url = "https://api.github.com/repos/#{user_repo}/issues"
   response = http_request :post, issues_url, new_issue_json
-  response_check(response, "create issue (#{issues_url})")
-  issue = JSON.parse(response.body)
+  response_check response, "create issue (#{issues_url})"
+  issue = JSON.parse response.body
   puts "Created issue: #{issue["html_url"]}"
+  issue
+end
+
+def comment_issue issue, comment_body, options={}
+  comments_url = issue["comments_url"]
+  body_json_string = json_escape comment_body.chomp
+  issue_comment_json = "{ \"body\": #{body_json_string} }"
+  response = http_request :post, comments_url, issue_comment_json
+  response_check response, "create comment (#{comments_url})"
+  puts "Commented on issue: #{issue["html_url"]}" if options[:notify]
+end
+
+def close_issue issue
+  issue_url = issue["url"]
+  close_issue_json = '{ "state": "closed" }'
+  response = http_request :post, issue_url, close_issue_json
+  response_check response, "close issue (#{issue_url})"
+end
+
+open_issues_url = \
+  "https://api.github.com/repos/#{user_repo}/issues?filter=created"
+response = http_request :get, open_issues_url
+response_check response, "get issues (#{open_issues_url})"
+
+open_issues = JSON.parse response.body
+
+if close
+  open_issues.each do |issue|
+    comment_body = "Succeeded at #{message}."
+    comment_issue issue, comment_body
+    close_issue issue
+  end
+elsif open_issues.any?
+  issue = open_issues.first
+  comment_issue issue, issue_body, notify: true
+else
+  title = "#{message} failed for #{@github_username}"
+  create_issue user_repo, title, issue_body
 end
