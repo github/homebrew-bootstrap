@@ -45,8 +45,14 @@ end
 
 exit unless RUBY_PLATFORM.include? "darwin"
 
+strap_url = ENV["STRAP_URL"]
+strap_url ||= "https://strap.githubapp.com"
+
 unless File.exist? "/usr/local/bin/brew"
-  abort "Error: Homebrew is not in /usr/local. Run https://strap.githubapp.com."
+  abort <<-EOS
+Error: Homebrew is not in /usr/local. Install it by running Strap:
+  #{strap_url}
+EOS
 end
 
 brewfile = <<-EOS
