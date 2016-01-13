@@ -9,8 +9,8 @@ if user_repo.to_s.empty? || message.to_s.empty?
 end
 
 unless close
-  abort "Error: the issue's body should be piped over STDIN!" if STDIN.tty?
-  issue_body = STDIN.read
+  abort "Error: the issue/comment body should be piped over STDIN!" if STDIN.tty?
+  body = STDIN.read
 end
 
 github_credentials=`printf "protocol=https\nhost=github.com\n" | git credential fill 2>/dev/null`
@@ -116,8 +116,8 @@ if close
   end
 elsif open_issues.any?
   issue = open_issues.first
-  comment_issue issue, issue_body, notify: true
+  comment_issue issue, body, notify: true
 else
   title = "#{message} failed for #{@github_username}"
-  create_issue user_repo, title, issue_body
+  create_issue user_repo, title, body
 end
