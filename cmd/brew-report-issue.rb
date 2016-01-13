@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# Creates and closes issues on a project.
+# Creates and closes failure debugging issues on a project.
 close = !!ARGV.delete("--close")
 user_repo = ARGV.shift
 message = ARGV.shift
