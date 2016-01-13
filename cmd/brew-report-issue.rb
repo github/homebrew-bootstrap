@@ -19,10 +19,13 @@ github_credentials=`printf "protocol=https\nhost=github.com\n" | git credential 
 github_username ||= ENV["BOXEN_GITHUB_LOGIN"]
 github_username ||= `git config github.user`.chomp
 
+strap_url = ENV["STRAP_URL"]
+strap_url ||= "https://strap.githubapp.com"
+
 if github_username.to_s.empty?
   abort <<-EOS
 Error: your GitHub username is not set! Set it by running Strap:
-  https://strap.githubapp.com
+  #{strap_url}
 EOS
 end
 @github_username = github_username
@@ -30,7 +33,7 @@ end
 if github_password.to_s.empty?
   abort <<-EOS
 Error: your GitHub password is not set! Set it by running Strap:
-  https://strap.githubapp.com
+  #{strap_url}
 EOS
 end
 @github_password = github_password
