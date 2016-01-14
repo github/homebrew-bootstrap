@@ -67,19 +67,8 @@ def response_check response, action
   exit 1
 end
 
-def json_escape string
-  JSON.generate string, quirks_mode: true
-end
-
 def create_issue user_repo, title, body
-  title_json_string = json_escape title
-  body_json_string = json_escape body.chomp
-  new_issue_json = <<-EOS
-    {
-      "title": #{title_json_string},
-      "body":  #{body_json_string}
-    }
-  EOS
+  new_issue_json = { title: title, body: body }.to_json
   issues_url = "https://api.github.com/repos/#{user_repo}/issues"
   response = http_request :post, issues_url, new_issue_json
   response_check response, "create issue (#{issues_url})"
@@ -90,8 +79,7 @@ end
 
 def comment_issue issue, comment_body, options={}
   comments_url = issue["comments_url"]
-  body_json_string = json_escape comment_body.chomp
-  issue_comment_json = "{ \"body\": #{body_json_string} }"
+  issue_comment_json = { body: comment_body }.to_json
   response = http_request :post, comments_url, issue_comment_json
   response_check response, "create comment (#{comments_url})"
   puts "Commented on issue: #{issue["html_url"]}" if options[:notify]
@@ -99,7 +87,7 @@ end
 
 def close_issue issue
   issue_url = issue["url"]
-  close_issue_json = '{ "state": "closed" }'
+  close_issue_json = { state: "closed" }.to_json
   response = http_request :post, issue_url, close_issue_json
   response_check response, "close issue (#{issue_url})"
 end
