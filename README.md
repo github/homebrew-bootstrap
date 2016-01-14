@@ -17,6 +17,8 @@ brew bootstrap-rbenv-ruby # or any other script
 ## Status
 In active development.
 
+[![Build Status](https://travis-ci.org/github/homebrew-bootstrap.svg)](https://travis-ci.org/github/homebrew-bootstrap)
+
 ## Contact
 [@mikemcquaid](https://github.com/mikemcquaid/)
 
