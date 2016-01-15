@@ -13,14 +13,21 @@ unless close
   body = STDIN.read
 end
 
-github_credentials=`printf "protocol=https\nhost=github.com\n" | git credential fill 2>/dev/null`
-/username=(?<github_username>.+)/ =~ github_credentials
-/password=(?<github_password>.+)/ =~ github_credentials
-github_username ||= ENV["BOXEN_GITHUB_LOGIN"]
-github_username ||= `git config github.user`.chomp
+@credential_helper = `git config --global credential.helper`.chomp
 
 strap_url = ENV["STRAP_URL"]
 strap_url ||= "https://strap.githubapp.com"
+
+if @credential_helper.empty?
+  abort <<-EOS
+Error: your Git HTTP(S) credential helper is not set! Set it by running Strap:
+#{strap_url}
+EOS
+end
+
+@github_credentials=`printf "protocol=https\nhost=github.com\n" | git credential fill 2>/dev/null`
+/username=(?<github_username>.+)/ =~ @github_credentials
+/password=(?<github_password>.+)/ =~ @github_credentials
 
 if github_username.to_s.empty?
   abort <<-EOS
@@ -37,6 +44,14 @@ Error: your GitHub password is not set! Set it by running Strap:
 EOS
 end
 @github_password = github_password
+
+def credential_helper(command, input)
+  `printf "#{input}" | git credential-#{@credential_helper} #{command}`
+end
+
+if credential_helper(:get, @github_credentials).to_s.empty?
+  credential_helper :store, @github_credentials
+end
 
 require "net/http"
 require "json"
@@ -62,6 +77,8 @@ def response_check response, action
   STDERR.puts "Error: failed to #{action}!"
   unless response.body.empty?
     failure = JSON.parse response.body
+    # If there's bad credentials, erase them.
+    credential_helper :erase, @github_credentials if response.code == "401"
     STDERR.puts "--\n#{response.code}: #{failure["message"] }"
   end
   exit 1
