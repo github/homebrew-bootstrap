@@ -74,11 +74,11 @@ end
 
 def response_check response, action
   return if response.is_a? Net::HTTPSuccess
+  # If there's bad credentials, erase them.
+  credential_helper :erase, @github_credentials if response.code == "401"
   STDERR.puts "Error: failed to #{action}!"
   unless response.body.empty?
     failure = JSON.parse response.body
-    # If there's bad credentials, erase them.
-    credential_helper :erase, @github_credentials if response.code == "401"
     STDERR.puts "--\n#{response.code}: #{failure["message"] }"
   end
   exit 1
