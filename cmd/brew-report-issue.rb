@@ -49,7 +49,7 @@ def credential_helper(command, input)
   `printf "#{input}" | git credential-#{@credential_helper} #{command}`
 end
 
-if credential_helper(:get, @github_credentials).to_s.empty?
+if credential_helper(:get, @github_credentials).to_s.chomp.empty?
   credential_helper :store, @github_credentials
 end
 
