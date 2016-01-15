@@ -93,7 +93,7 @@ def close_issue issue
 end
 
 open_issues_url = \
-  "https://api.github.com/repos/#{user_repo}/issues?filter=created"
+  "https://api.github.com/repos/#{user_repo}/issues?creator=#{@github_username}"
 response = http_request :get, open_issues_url
 response_check response, "get issues (#{open_issues_url})"
 
