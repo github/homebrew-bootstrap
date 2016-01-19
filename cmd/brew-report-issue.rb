@@ -24,10 +24,14 @@ EOS
 end
 
 def credential_helper(command, input)
-  `printf "#{input}" | git credential #{command} 2>/dev/null`
+  IO.popen(["git", "credential", "#{command}"], "w+", err: "/dev/null") do |io|
+    io.puts input
+    io.close_write
+    io.read
+  end
 end
 
-@github_credentials = credential_helper :fill, "protocol=https\nhost=github.com\n"
+@github_credentials = credential_helper :fill, "protocol=https\nhost=github.com"
 /username=(?<github_username>.+)/ =~ @github_credentials
 /password=(?<github_password>.+)/ =~ @github_credentials
 
