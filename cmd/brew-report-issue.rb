@@ -13,19 +13,25 @@ unless close
   body = STDIN.read
 end
 
-@credential_helper = `git config --global credential.helper`.chomp
-
 strap_url = ENV["STRAP_URL"]
 strap_url ||= "https://strap.githubapp.com"
 
-if @credential_helper.empty?
+if `git config --global credential.helper`.chomp.empty?
   abort <<-EOS
 Error: your Git HTTP(S) credential helper is not set! Set it by running Strap:
 #{strap_url}
 EOS
 end
 
-@github_credentials=`printf "protocol=https\nhost=github.com\n" | git credential fill 2>/dev/null`
+def credential_helper(command, input)
+  IO.popen(["git", "credential", "#{command}"], "w+", err: "/dev/null") do |io|
+    io.puts input
+    io.close_write
+    io.read
+  end
+end
+
+@github_credentials = credential_helper :fill, "protocol=https\nhost=github.com"
 /username=(?<github_username>.+)/ =~ @github_credentials
 /password=(?<github_password>.+)/ =~ @github_credentials
 
@@ -45,13 +51,7 @@ EOS
 end
 @github_password = github_password
 
-def credential_helper(command, input)
-  `printf "#{input}" | git credential-#{@credential_helper} #{command}`
-end
-
-if credential_helper(:get, @github_credentials).to_s.chomp.empty?
-  credential_helper :store, @github_credentials
-end
+credential_helper :approve, @github_credentials
 
 require "net/http"
 require "json"
@@ -75,7 +75,7 @@ end
 def response_check response, action
   return if response.is_a? Net::HTTPSuccess
   # If there's bad credentials, erase them.
-  credential_helper :erase, @github_credentials if response.code == "401"
+  credential_helper :reject, @github_credentials if response.code == "401"
   STDERR.puts "Error: failed to #{action}!"
   unless response.body.empty?
     failure = JSON.parse response.body
