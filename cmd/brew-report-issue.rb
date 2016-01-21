@@ -24,7 +24,8 @@ EOS
 end
 
 def credential_helper(command, input)
-  IO.popen(["git", "credential", "#{command}"], "w+", err: "/dev/null") do |io|
+  IO.popen({"RUBYLIB" => nil, "RUBYOPT" => nil},
+           ["git", "credential", "#{command}"], "w+") do |io|
     io.puts input
     io.close_write
     io.read
