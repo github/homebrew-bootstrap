@@ -82,6 +82,12 @@ def response_check response, action
     failure = JSON.parse response.body
     STDERR.puts "--\n#{response.code}: #{failure["message"] }"
   end
+  if response.code == "401"
+    STDERR.puts <<-EOS
+Error: your GitHub username/access token are not correct! Fix by running Strap:
+  #{strap_url}
+EOS
+  end
   exit 1
 end
 
