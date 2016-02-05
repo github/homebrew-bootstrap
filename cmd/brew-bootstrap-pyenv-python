@@ -1,0 +1,51 @@
+#!/bin/bash
+# Installs Python and pip.
+set -e
+
+if [ "$1" = "--debug" ]; then
+  shift
+  PRINT_DEBUG="1"
+  set -x
+fi
+
+warn() { echo "$@" >&2; }
+abort() { EXPECTED_EXIT="1"; warn "$@"; exit 1; }
+
+cleanup() {
+  set +e
+  if [ -n "$EXPECTED_EXIT" ]; then
+    return
+  fi
+  warn "Error: $(basename $0) failed!"
+  if [ -z "$PRINT_DEBUG" ]; then
+    warn "For debugging output run:"
+    warn "  $0 --debug"
+    warn "If you're stuck: file an issue with debugging output at:"
+    warn "  https://github.com/github/homebrew-bootstrap/issues/new"
+  fi
+}
+trap "cleanup" EXIT
+
+BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if ! which pyenv &>/dev/null; then
+  abort "Error: you need to 'brew install pyenv'!"
+fi
+
+if ! pyenv version-name &>/dev/null; then
+  PYTHON_REQUESTED="$(pyenv local)"
+  PYTHON_DEFINITION="$(python-build --definitions | grep "^$PYTHON_REQUESTED$" || true)"
+
+  if [ -z "$PYTHON_DEFINITION" ]; then
+    abort "Error: cannot find Python $PYTHON_DEFINITION definition!"
+  fi
+
+  pyenv install "$PYTHON_DEFINITION"
+fi
+
+if [ "$(pyenv exec python --version 2>&1)" != "$(python --version 2>&1)" ]; then
+  abort 'Error: add `eval "$(pyenv init -)"` to the end of your .bash_profile/.zshrc!'
+fi
+
+EXPECTED_EXIT="1"
+exit 0
