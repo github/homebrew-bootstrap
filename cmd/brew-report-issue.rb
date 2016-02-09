@@ -42,7 +42,10 @@ Error: your GitHub username is not set! Set it by running Strap:
   #{strap_url}
 EOS
 end
-@github_username = github_username
+@github_username = ENV["BOXEN_GITHUB_LOGIN"]
+@github_username ||= `git config github.user`.chomp
+@github_username ||= github_username
+@github_api_username = github_username
 
 if github_password.to_s.empty?
   abort <<-EOS
@@ -50,7 +53,7 @@ Error: your GitHub password is not set! Set it by running Strap:
   #{strap_url}
 EOS
 end
-@github_password = github_password
+@github_api_password = github_password
 
 credential_helper :approve, @github_credentials
 
@@ -67,7 +70,7 @@ def http_request type, url, body=nil
     Net::HTTP::Get.new uri
   end
   return unless request
-  request.basic_auth @github_username, @github_password
+  request.basic_auth @github_api_username, @github_api_password
   Net::HTTP.start uri.hostname, uri.port, use_ssl: true  do |http|
     http.request request
   end
