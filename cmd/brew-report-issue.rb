@@ -42,9 +42,9 @@ Error: your GitHub username is not set! Set it by running Strap:
   #{strap_url}
 EOS
 end
-@github_username = ENV["BOXEN_GITHUB_LOGIN"]
-@github_username ||= `git config github.user`.chomp
-@github_username ||= github_username
+@github_username = ENV["BOXEN_GITHUB_LOGIN"].to_s
+@github_username = `git config github.user`.chomp if @github_username.empty?
+@github_username = github_username if @github_username.empty?
 @github_api_username = github_username
 
 if github_password.to_s.empty?
