@@ -55,9 +55,6 @@ if ! rbenv version-name &>/dev/null; then
   export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$HOMEBREW_PREFIX/opt/openssl"
 
   rbenv install --skip-existing "$RUBY_DEFINITION"
-  if [ "$(rbenv exec ruby --version)" != "$(ruby --version)" ]; then
-    abort 'Error: add `eval "$(rbenv init -)"` to the end of your .bash_profile/.zshrc!'
-  fi
 fi
 
 (which bundle &>/dev/null && bundle -v &>/dev/null) || {
