@@ -54,7 +54,7 @@ if ! rbenv version-name &>/dev/null; then
   fi
 fi
 
-(which bundle &>/dev/null && bundle -v &>/dev/null) || {
+(rbenv which bundle &>/dev/null && bundle -v &>/dev/null) || {
   gem install bundler
   rbenv rehash
 }
