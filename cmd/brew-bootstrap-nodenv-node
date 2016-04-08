@@ -32,6 +32,12 @@ if ! which nodenv &>/dev/null; then
   abort "Error: you need to 'brew install nodenv'!"
 fi
 
+if [ $(type -t nodenv) != 'function' ]; then
+  warn "Warning: setting up nodenv temporarily."
+  warn "You may need to set it up in your shell; check \`brew info nodenv\`"
+  eval "$(nodenv init -)"
+fi
+
 if ! nodenv version-name &>/dev/null; then
   NODE_REQUESTED="$(nodenv local)"
   NODE_DEFINITION="$(node-build --definitions | grep "^$NODE_REQUESTED$" || true)"
@@ -41,10 +47,6 @@ if ! nodenv version-name &>/dev/null; then
   fi
 
   nodenv install "$NODE_DEFINITION"
-fi
-
-if [ "$(nodenv exec node --version)" != "$(node --version)" ]; then
-  abort 'Error: add `eval "$(nodenv init -)"` to the end of your .bash_profile/.zshrc!'
 fi
 
 EXPECTED_EXIT="1"
