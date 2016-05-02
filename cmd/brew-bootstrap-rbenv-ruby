@@ -11,6 +11,35 @@ fi
 warn() { echo "$@" >&2; }
 abort() { EXPECTED_EXIT="1"; warn "$@"; exit 1; }
 
+warn_sh() {
+  abort 'Error: add `eval "$(rbenv init -)"` to the end of your .bash_profile!'
+}
+
+warn_zsh() {
+  abort 'Error: add `eval "$(rbenv init -)"` to the end of your .zshrc!'
+}
+
+warn_fish() {
+  abort 'Error: add `status --is-interactive; and . (rbenv init -|psub)` to the end of your .config/fish/config.fish!'
+}
+
+warn_shell_setup() {
+  case $(basename ${SHELL:-bash}) in
+  sh|bash)
+    warn_sh
+    ;;
+  zsh)
+    warn_zsh
+    ;;
+  fish)
+    warn_fish
+    ;;
+  # tcsh users are on their own
+  *)
+    abort 'Error: you must finish setting up rbenv in your shell; check `rbenv init` for instructions!'
+  esac
+}
+
 cleanup() {
   set +e
   if [ -n "$EXPECTED_EXIT" ]; then
@@ -52,7 +81,7 @@ if ! rbenv version-name &>/dev/null; then
 fi
 
 if [ "$(rbenv exec ruby --version)" != "$(ruby --version)" ]; then
-  abort 'Error: add `eval "$(rbenv init -)"` to the end of your .bash_profile/.zshrc!'
+  warn_shell_setup
 fi
 
 (rbenv which bundle &>/dev/null && bundle -v &>/dev/null) || {
