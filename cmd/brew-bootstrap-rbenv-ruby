@@ -11,19 +11,19 @@ fi
 warn() { echo "$@" >&2; }
 abort() { EXPECTED_EXIT="1"; warn "$@"; exit 1; }
 
-warn_sh() {
+abort_for_sh() {
   abort 'Error: add `eval "$(rbenv init -)"` to the end of your .bash_profile!'
 }
 
-warn_zsh() {
+abort_for_zsh() {
   abort 'Error: add `eval "$(rbenv init -)"` to the end of your .zshrc!'
 }
 
-warn_fish() {
+abort_for_fish() {
   abort 'Error: add `status --is-interactive; and . (rbenv init -|psub)` to the end of your .config/fish/config.fish!'
 }
 
-warn_shell_setup() {
+abort_with_shell_setup_message() {
   case $(basename ${SHELL:-bash}) in
   sh|bash)
     warn_sh
@@ -81,7 +81,7 @@ if ! rbenv version-name &>/dev/null; then
 fi
 
 if [ "$(rbenv exec ruby --version)" != "$(ruby --version)" ]; then
-  warn_shell_setup
+  abort_with_shell_setup_message
 fi
 
 (rbenv which bundle &>/dev/null && bundle -v &>/dev/null) || {
