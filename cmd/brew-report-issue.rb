@@ -13,13 +13,13 @@ unless close
   body = STDIN.read
 end
 
-strap_url = ENV["STRAP_URL"]
-strap_url ||= "https://strap.githubapp.com"
+@strap_url = ENV["STRAP_URL"]
+@strap_url ||= "https://strap.githubapp.com"
 
 if `git config --global credential.helper`.chomp.empty?
   abort <<-EOS
 Error: your Git HTTP(S) credential helper is not set! Set it by running Strap:
-#{strap_url}
+#{@strap_url}
 EOS
 end
 
@@ -39,7 +39,7 @@ end
 if github_username.to_s.empty?
   abort <<-EOS
 Error: your GitHub username is not set! Set it by running Strap:
-  #{strap_url}
+  #{@strap_url}
 EOS
 end
 @github_username = ENV["BOXEN_GITHUB_LOGIN"].to_s
@@ -50,7 +50,7 @@ end
 if github_password.to_s.empty?
   abort <<-EOS
 Error: your GitHub password is not set! Set it by running Strap:
-  #{strap_url}
+  #{@strap_url}
 EOS
 end
 @github_api_password = github_password
@@ -88,7 +88,7 @@ def response_check response, action
   if response.code == "401"
     STDERR.puts <<-EOS
 Error: your GitHub username/access token are not correct! Fix by running Strap:
-  #{strap_url}
+  #{@strap_url}
 EOS
   end
   exit 1
