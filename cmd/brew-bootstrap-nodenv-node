@@ -26,13 +26,13 @@ abort_for_fish() {
 abort_with_shell_setup_message() {
   case $(basename ${SHELL:-bash}) in
   sh|bash)
-    warn_sh
+    abort_for_sh
     ;;
   zsh)
-    warn_zsh
+    abort_for_zsh
     ;;
   fish)
-    warn_fish
+    abort_for_fish
     ;;
   # tcsh users are on their own
   *)
