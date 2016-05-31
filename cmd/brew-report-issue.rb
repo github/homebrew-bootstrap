@@ -16,7 +16,7 @@ end
 @strap_url = ENV["STRAP_URL"]
 @strap_url ||= "https://strap.githubapp.com"
 
-if `git config --global credential.helper`.chomp.empty?
+if `git config credential.helper`.chomp.empty?
   abort <<-EOS
 Error: your Git HTTP(S) credential helper is not set! Set it by running Strap:
 #{@strap_url}
