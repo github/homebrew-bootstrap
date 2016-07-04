@@ -73,6 +73,7 @@ if `readlink /etc/resolver 2>/dev/null`.chomp != "/usr/local/etc/resolver"
   unless system "sudo -n true >/dev/null"
     puts "Asking for your password to setup *.dev:"
   end
+  system "sudo rm -rf /etc/resolver"
   unless system "sudo ln -sf /usr/local/etc/resolver /etc/resolver"
     abort "Error: failed to symlink /usr/local/etc/resolver to /etc/resolver!"
   end
