@@ -79,6 +79,15 @@ if `readlink /etc/resolver 2>/dev/null`.chomp != "/usr/local/etc/resolver"
   end
 end
 
+if File.exist? "/etc/pf.anchors/dev.strap"
+  unless system "sudo -n true >/dev/null"
+    puts "Asking for your password to setup launch_socket_server:"
+  end
+  system "sudo rm /etc/pf.anchors/dev.strap"
+  system "brew install launch_socket_server"
+  system "brew services restart launch_socket_server"
+end
+
 server = "/usr/local/etc/nginx/servers/#{name}"
 unless system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
   abort "Error: failed to symlink #{output} to #{server}!"
