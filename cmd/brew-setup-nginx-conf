@@ -57,16 +57,17 @@ end
 
 brewfile = <<-EOS
 brew "launchdns", restart_service: true
+brew "launch_socket_server"
 brew "nginx", restart_service: true
 EOS
 
-started_nginx = false
+started_services = false
 unless system "echo '#{brewfile}' | brew bundle check --file=- >/dev/null"
   puts "Installing *.dev dependencies:"
   unless system "echo '#{brewfile}' | brew bundle --file=-"
     abort "Error: install *.dev dependencies with brew bundle!"
   end
-  started_nginx = true
+  started_services = true
 end
 
 if `readlink /etc/resolver 2>/dev/null`.chomp != "/usr/local/etc/resolver"
@@ -79,14 +80,32 @@ if `readlink /etc/resolver 2>/dev/null`.chomp != "/usr/local/etc/resolver"
   end
 end
 
+if File.exist? "/etc/pf.anchors/dev.strap"
+  unless system "sudo -n true >/dev/null"
+    puts "Asking for your password to setup launch_socket_server:"
+  end
+  system "sudo rm /etc/pf.anchors/dev.strap"
+  system "sudo grep -v 'dev.strap' /etc/pf.conf | sudo tee /etc/pf.conf"
+  system "sudo launchctl unload /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
+  system "sudo launchctl load -w /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
+  system "sudo launchctl unload /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
+  system "sudo rm -f /Library/LaunchDaemons/dev.strap.pf.plist"
+end
+
 server = "/usr/local/etc/nginx/servers/#{name}"
 unless system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
   abort "Error: failed to symlink #{output} to #{server}!"
 end
 
 system "brew prune >/dev/null"
-unless started_nginx
+unless started_services
   unless system "brew services restart nginx >/dev/null"
     abort "Error: failed to (re)start nginx!"
+  end
+  unless system "sudo -n true >/dev/null"
+    puts "Asking for your password to restart launch_socket_server:"
+  end
+  unless system "sudo brew services restart launch_socket_server >/dev/null"
+    abort "Error: failed to (re)start launch_socket_server!"
   end
 end
