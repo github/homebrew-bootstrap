@@ -57,7 +57,6 @@ end
 
 brewfile = <<-EOS
 brew "launchdns", restart_service: true
-brew "launch_socket_server"
 brew "nginx", restart_service: true
 EOS
 
@@ -82,7 +81,7 @@ end
 
 if File.exist? "/etc/pf.anchors/dev.strap"
   unless system "sudo -n true >/dev/null"
-    puts "Asking for your password to setup launch_socket_server:"
+    puts "Asking for your password to uninstall pf:"
   end
   system "sudo rm /etc/pf.anchors/dev.strap"
   system "sudo grep -v 'dev.strap' /etc/pf.conf | sudo tee /etc/pf.conf"
@@ -101,11 +100,5 @@ system "brew prune >/dev/null"
 unless started_services
   unless system "brew services restart nginx >/dev/null"
     abort "Error: failed to (re)start nginx!"
-  end
-  unless system "sudo -n true >/dev/null"
-    puts "Asking for your password to restart launch_socket_server:"
-  end
-  unless system "sudo brew services restart launch_socket_server >/dev/null"
-    abort "Error: failed to (re)start launch_socket_server!"
   end
 end
