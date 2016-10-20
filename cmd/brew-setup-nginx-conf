@@ -57,6 +57,7 @@ end
 
 brewfile = <<-EOS
 brew "launchdns", restart_service: true
+brew "launch_socket_server"
 brew "nginx", restart_service: true
 EOS
 
@@ -90,6 +91,15 @@ if File.exist? "/etc/pf.anchors/dev.strap"
   system "sudo launchctl unload /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
   system "sudo rm -f /Library/LaunchDaemons/dev.strap.pf.plist"
 end
+if `brew services list | grep launch_socket_server | grep started` == ''
+  unless system "sudo -n true > /dev/null"
+    puts "Asking for your password to start launch_socket_server:"
+  end
+  unless system "sudo brew services start launch_socket_server >/dev/null"
+    abort "Error: failed to start launch_socket_server!"
+  end
+end
+
 
 server = "/usr/local/etc/nginx/servers/#{name}"
 unless system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
