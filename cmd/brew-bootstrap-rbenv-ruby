@@ -69,7 +69,7 @@ if ! rbenv version-name &>/dev/null; then
     RUBY_DEFINITION="$BASE_PATH/ruby-definitions/$RUBY_REQUESTED"
 
     if ! [ -f "$RUBY_DEFINITION" ]; then
-      warn  "Error: cannot find Ruby $RUBY_REQUESTED definition file at:"
+      warn  "Error: cannot find Ruby $RUBY_REQUESTED definition in ruby-build or at:"
       abort "$RUBY_DEFINITION"
     fi
   fi
