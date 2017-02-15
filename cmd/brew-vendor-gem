@@ -36,6 +36,8 @@ if [ -z "$url" ]; then
     exit 1
 fi
 
+have_gemfile=$([ -f "Gemfile" ]; echo $?)
+
 repo=$(echo "$url" | sed 's@^\(https://github\.com.*\)\.git$@\1@')
 
 if [ -z "$gem" ]; then
@@ -106,10 +108,12 @@ RUBY
       gem build $gemspec
     fi
 
-    # Bump gem version in Gemfile (and deal with OS X sed differences)
-    sed -i -e "s/^\([[:space:]]*\)gem ['\"]$gemname['\"],\( *\)['\"][^'\"]*['\"]/\\1gem \"$gemname\",\\2\"$GEM_VERSION\"/" ../../../Gemfile
-    if [ `uname` = 'Darwin' ]; then
-      rm -f "../../../Gemfile-e"
+    if [ $have_gemfile = 0 ]; then
+        # Bump gem version in Gemfile (and deal with OS X sed differences)
+        sed -i -e "s/^\([[:space:]]*\)gem ['\"]$gemname['\"],\( *\)['\"][^'\"]*['\"]/\\1gem \"$gemname\",\\2\"$GEM_VERSION\"/" ../../../Gemfile
+        if [ `uname` = 'Darwin' ]; then
+          rm -f "../../../Gemfile-e"
+        fi
     fi
 )
 [ $? -eq 0 ] || exit 1
@@ -133,5 +137,7 @@ newref=$(ls vendor/cache/$gemname-*.gem | grep -o -E -e "g[0-9a-f]{7}" | cut -c 
 # write out compare url for review
 echo "$repo/compare/$oldref...$newref"
 
-bundle update --local $gemname
-git add Gemfile Gemfile.lock
+if [ $have_gemfile = 0 ]; then
+    bundle update --local $gemname
+    git add Gemfile Gemfile.lock
+fi
