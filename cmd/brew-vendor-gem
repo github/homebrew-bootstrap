@@ -4,7 +4,7 @@
 #/ the gem at the branch, tag, or SHA1 given. With no -r, build the default HEAD.
 #/
 #/ This command is used in situations where you'd typically use a :git bundler
-#/ source which should not be used in the main github app (even for development gems).
+#/ source, but allows for caching in vendor.
 set -e
 [ $# -eq 0 ] && set -- --help
 
