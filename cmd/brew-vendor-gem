@@ -44,10 +44,6 @@ if [ -z "$gem" ]; then
     gem=$(basename "$url" .git)
 fi
 
-# the RAILS_ROOT directory
-root=$(cd $(dirname "$0")/.. && pwd)
-cd "$root"
-
 # in case people don't already have it in their PATH
 export PATH="$root/bin:$PATH"
 
