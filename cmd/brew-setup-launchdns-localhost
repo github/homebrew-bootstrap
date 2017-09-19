@@ -1,0 +1,29 @@
+#!/bin/bash
+# Installs launchdns and configures it to redirect localhost.
+
+set -euo pipefail
+
+# Write the resolver
+resolver_path="/etc/resolver"
+localhost_resolver_path="$resolver_path/localhost"
+if ! [[ -f "$localhost_resolver_path" ]]; then
+	echo "Writing a launchdns resolver file for .localhost"
+
+	cat <<- EOF > "$localhost_resolver_path"
+	nameserver 127.0.0.1
+	port 55353
+	EOF
+	# Matches the launchdns-managed version's permissions
+	chmod 0644 "$localhost_resolver_path"
+fi
+
+if ! [[ -d "$HOMEBREW_PREFIX/opt/launchdns" ]]; then
+	echo "Installing launchdns"
+
+	brew bundle --file=<(echo 'brew "launchdns"')
+fi
+
+echo "Restarting launchdns"
+brew services restart launchdns
+
+echo "All done!"
