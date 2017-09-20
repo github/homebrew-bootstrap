@@ -10,9 +10,9 @@ if ! [[ -d "$resolver_path" ]]; then
 
 	homebrew_resolver_path="$HOMEBREW_PREFIX/etc/resolver"
 	sudo mkdir -p "$homebrew_resolver_path"
-	sudo chmod 0755 "$homebrew_resolver_path"
 	sudo ln -s "$homebrew_resolver_path" "$resolver_path"
-	sudo chmod 0755 "$resolver_path"
+	sudo chmod 0755 "$homebrew_resolver_path" "$resolver_path"
+	sudo chown $USER:admin "$homebrew_resolver_path" "$resolver_path"
 fi
 
 localhost_resolver_path="$resolver_path/localhost"
