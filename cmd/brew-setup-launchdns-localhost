@@ -19,7 +19,7 @@ localhost_resolver_path="$resolver_path/localhost"
 if ! [[ -f "$localhost_resolver_path" ]]; then
 	echo "Writing a launchdns resolver file for .localhost"
 
-	cat <<- EOF > "$localhost_resolver_path"
+	cat > "$localhost_resolver_path" <<- EOF
 	nameserver 127.0.0.1
 	port 55353
 	EOF
