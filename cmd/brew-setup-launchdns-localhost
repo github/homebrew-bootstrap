@@ -6,6 +6,8 @@ set -euo pipefail
 # Write the resolver
 resolver_path="/etc/resolver"
 if ! [[ -d "$resolver_path" ]]; then
+	echo "Creating the system resolver path"
+
 	homebrew_resolver_path="$HOMEBREW_PREFIX/etc/resolver"
 	sudo mkdir -p "$homebrew_resolver_path"
 	sudo ln -s "$homebrew_resolver_path" "$resolver_path"
