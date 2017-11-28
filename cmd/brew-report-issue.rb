@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # Creates and closes failure debugging issues on a project.
-close = !!ARGV.delete("--close")
+close = !ARGV.delete("--close").nil?
 user_repo = ARGV.shift
 message = ARGV.shift
 
@@ -13,19 +13,19 @@ unless close
   body = STDIN.read
 end
 
-@strap_url = ENV["STRAP_URL"]
+@strap_url = ENV["HOMEBREW_STRAP_URL"]
 @strap_url ||= "https://strap.githubapp.com"
 
 if `git config credential.helper`.chomp.empty?
-  abort <<-EOS
-Error: your Git HTTP(S) credential helper is not set! Set it by running Strap:
-#{@strap_url}
-EOS
+  abort <<~EOS
+    Error: your Git HTTP(S) credential helper is not set! Set it by running Strap:
+    #{@strap_url}
+  EOS
 end
 
 def credential_helper(command, input)
-  IO.popen({"RUBYLIB" => nil, "RUBYOPT" => nil},
-           ["git", "credential", "#{command}"], "w+") do |io|
+  IO.popen({ "RUBYLIB" => nil, "RUBYOPT" => nil },
+           ["git", "credential", command.to_s], "w+") do |io|
     io.puts input
     io.close_write
     io.read
@@ -37,20 +37,19 @@ end
 /password=(?<github_password>.+)/ =~ @github_credentials
 
 if github_username.to_s.empty?
-  abort <<-EOS
-Error: your GitHub username is not set! Set it by running Strap:
-  #{@strap_url}
+  abort <<~EOS
+    Error: your GitHub username is not set! Set it by running Strap:
+      #{@strap_url}
 EOS
 end
-@github_username = ENV["BOXEN_GITHUB_LOGIN"].to_s
-@github_username = `git config github.user`.chomp if @github_username.empty?
+@github_username = `git config github.user`.chomp
 @github_username = github_username if @github_username.empty?
 @github_api_username = github_username
 
 if github_password.to_s.empty?
-  abort <<-EOS
-Error: your GitHub password is not set! Set it by running Strap:
-  #{@strap_url}
+  abort <<~EOS
+    Error: your GitHub password is not set! Set it by running Strap:
+      #{@strap_url}
 EOS
 end
 @github_api_password = github_password
@@ -60,7 +59,7 @@ credential_helper :approve, @github_credentials
 require "net/http"
 require "json"
 
-def http_request type, url, body=nil
+def http_request(type, url, body = nil)
   uri = URI url
   request = if type == :post
     post_request = Net::HTTP::Post.new uri
@@ -71,30 +70,30 @@ def http_request type, url, body=nil
   end
   return unless request
   request.basic_auth @github_api_username, @github_api_password
-  Net::HTTP.start uri.hostname, uri.port, use_ssl: true  do |http|
+  Net::HTTP.start uri.hostname, uri.port, use_ssl: true do |http|
     http.request request
   end
 end
 
-def response_check response, action
+def response_check(response, action)
   return if response.is_a? Net::HTTPSuccess
   # If there's bad credentials, erase them.
   credential_helper :reject, @github_credentials if response.code == "401"
   STDERR.puts "Error: failed to #{action}!"
   unless response.body.empty?
     failure = JSON.parse response.body
-    STDERR.puts "--\n#{response.code}: #{failure["message"] }"
+    STDERR.puts "--\n#{response.code}: #{failure["message"]}"
   end
   if response.code == "401"
-    STDERR.puts <<-EOS
-Error: your GitHub username/access token are not correct! Fix by running Strap:
-  #{@strap_url}
+    STDERR.puts <<~EOS
+      Error: your GitHub username/access token are not correct! Fix by running Strap:
+        #{@strap_url}
 EOS
   end
   exit 1
 end
 
-def create_issue user_repo, title, body
+def create_issue(user_repo, title, body)
   new_issue_json = { title: title, body: body }.to_json
   issues_url = "https://api.github.com/repos/#{user_repo}/issues"
   response = http_request :post, issues_url, new_issue_json
@@ -104,7 +103,7 @@ def create_issue user_repo, title, body
   issue
 end
 
-def comment_issue issue, comment_body, options={}
+def comment_issue(issue, comment_body, options = {})
   comments_url = issue["comments_url"]
   issue_comment_json = { body: comment_body }.to_json
   response = http_request :post, comments_url, issue_comment_json
@@ -112,7 +111,7 @@ def comment_issue issue, comment_body, options={}
   puts "Commented on issue: #{issue["html_url"]}" if options[:notify]
 end
 
-def close_issue issue
+def close_issue(issue)
   issue_url = issue["url"]
   close_issue_json = { state: "closed" }.to_json
   response = http_request :post, issue_url, close_issue_json

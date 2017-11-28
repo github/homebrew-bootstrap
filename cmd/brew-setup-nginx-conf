@@ -20,9 +20,7 @@ if !name || !root || !input
   abort "Usage: brew setup-nginx-conf [--root] <project_name> <project_root_path> <nginx.conf.erb>"
 end
 
-unless input.end_with? ".erb"
-  abort "Error: #{input} is not a .erb file!"
-end
+abort "Error: #{input} is not a .erb file!" unless input.end_with? ".erb"
 
 root = File.expand_path root
 input = File.expand_path input
@@ -33,7 +31,6 @@ output = input.sub(/.erb$/, "")
 output.sub!(/.conf$/, ".root.conf") if root_configuration
 IO.write output, conf
 
-exit if ENV["BOXEN_HOME"]
 exit if root_configuration
 
 /access_log (?<log>.+);/ =~ conf
@@ -45,20 +42,20 @@ end
 
 exit unless RUBY_PLATFORM.include? "darwin"
 
-strap_url = ENV["STRAP_URL"]
+strap_url = ENV["HOMEBREW_STRAP_URL"]
 strap_url ||= "https://strap.githubapp.com"
 
 unless File.exist? "/usr/local/bin/brew"
-  abort <<-EOS
-Error: Homebrew is not in /usr/local. Install it by running Strap:
-  #{strap_url}
+  abort <<~EOS
+    Error: Homebrew is not in /usr/local. Install it by running Strap:
+      #{strap_url}
 EOS
 end
 
-brewfile = <<-EOS
-brew "launchdns", restart_service: true
-brew "launch_socket_server"
-brew "nginx", restart_service: true
+brewfile = <<~EOS
+  brew "launchdns", restart_service: true
+  brew "launch_socket_server"
+  brew "nginx", restart_service: true
 EOS
 
 started_services = false
@@ -91,7 +88,7 @@ if File.exist? "/etc/pf.anchors/dev.strap"
   system "sudo launchctl unload /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
   system "sudo rm -f /Library/LaunchDaemons/dev.strap.pf.plist"
 end
-if `brew services list | grep launch_socket_server | grep started` == ''
+if `brew services list | grep launch_socket_server | grep started` == ""
   unless system "sudo -n true > /dev/null"
     puts "Asking for your password to start launch_socket_server:"
   end
@@ -99,7 +96,6 @@ if `brew services list | grep launch_socket_server | grep started` == ''
     abort "Error: failed to start launch_socket_server!"
   end
 end
-
 
 server = "/usr/local/etc/nginx/servers/#{name}"
 unless system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
