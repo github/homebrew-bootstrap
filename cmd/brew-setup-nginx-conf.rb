@@ -26,7 +26,7 @@ root = File.expand_path root
 input = File.expand_path input
 
 data = IO.read input
-conf = ERB.new(data).result
+conf = ERB.new(data).result(binding)
 output = input.sub(/.erb$/, "")
 output.sub!(/.conf$/, ".root.conf") if root_configuration
 IO.write output, conf
