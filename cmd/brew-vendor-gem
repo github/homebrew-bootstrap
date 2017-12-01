@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #/ Usage: brew vendor-gem [-r <rev>] [-n <gem>] <git-url>
 #/ Build a gem for the given git repository and stick it in vendor/cache. With -r, build
 #/ the gem at the branch, tag, or SHA1 given. With no -r, build the default HEAD.
