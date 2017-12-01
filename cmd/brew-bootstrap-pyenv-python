@@ -1,0 +1,91 @@
+#!/bin/bash
+# Installs Python and Virtualenvwrapper.
+set -e
+
+if [ "$1" = "--debug" ]; then
+  shift
+  PRINT_DEBUG="1"
+  set -x
+fi
+
+warn() { echo "$@" >&2; }
+abort() { EXPECTED_EXIT="1"; warn "$@"; exit 1; }
+
+abort_for_sh() {
+  abort 'Error: add `eval "$(pyenv init -)"` to the end of your .bash_profile!'
+}
+
+abort_for_zsh() {
+  abort 'Error: add `eval "$(pyenv init -)"` to the end of your .zshrc!'
+}
+
+abort_for_fish() {
+  abort 'Error: add `status --is-interactive; and . (pyenv init -|psub)` to the end of your .config/fish/config.fish!'
+}
+
+abort_with_shell_setup_message() {
+  case $(basename ${SHELL:-bash}) in
+  sh|bash)
+    abort_for_sh
+    ;;
+  zsh)
+    abort_for_zsh
+    ;;
+  fish)
+    abort_for_fish
+    ;;
+  # tcsh users are on their own
+  *)
+    abort 'Error: you must finish setting up pyenv in your shell; check `pyenv init` for instructions!'
+  esac
+}
+
+cleanup() {
+  set +e
+  if [ -n "$EXPECTED_EXIT" ]; then
+    return
+  fi
+  warn "Error: $(basename $0) failed!"
+  if [ -z "$PRINT_DEBUG" ]; then
+    warn "For debugging output run:"
+    warn "  $0 --debug"
+    warn "If you're stuck: file an issue with debugging output at:"
+    warn "  https://github.com/github/homebrew-bootstrap/issues/new"
+  fi
+}
+trap "cleanup" EXIT
+
+BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if ! which pyenv &>/dev/null; then
+  abort "Error: you need to 'brew install pyenv'!"
+fi
+
+if ! pyenv version-name &>/dev/null; then
+  PYTHON_REQUESTED="$(pyenv local)"
+  PYTHON_DEFINITION="$(python-build --definitions | grep "^$PYTHON_REQUESTED$" || true)"
+
+  if [ -z "$PYTHON_DEFINITION" ]; then
+    PYTHON_DEFINITION="$BASE_PATH/python-definitions/$PYTHON_REQUESTED"
+
+    if ! [ -f "$PYTHON_DEFINITION" ]; then
+      warn  "Error: cannot find Python $PYTHON_REQUESTED definition in python-build or at:"
+      abort "$PYTHON_DEFINITION"
+    fi
+  fi
+
+  HOMEBREW_PREFIX="$(brew --prefix)"
+  "CFLAGS=-I$HOMEBREW_PREFIX/opt/openssl/include LDFLAGS=-L$HOMEBREW_PREFIX/opt/openssl/lib" pyenv install --skip-existing "$PYTHON_DEFINITION"
+fi
+
+if [ "$(pyenv exec python --version)" != "$(python --version)" ]; then
+  abort_with_shell_setup_message
+fi
+
+(pyenv which virtualenvwrapper.sh &>/dev/null) || {
+  pip install virtualenvwrapper
+  pyenv rehash
+}
+
+EXPECTED_EXIT="1"
+exit 0
