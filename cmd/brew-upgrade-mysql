@@ -47,11 +47,9 @@ if [[ $MYSQL_5_6 == "0" || $MYSQL_5_7 == "0" ]]; then
 
   update_my_cnf
 
-  # Upgrade the MySQL tables
-  echo "Upgrading MySQL Tables ..."
   brew services start mysql@5.7
 
-  while ! nc -z localhost 3306; do
+  while ! $(brew --prefix mysql@5.7)/bin/mysqladmin ping --silent; do
     echo "Waiting for MySQL to be available..."
     sleep 2
   done
