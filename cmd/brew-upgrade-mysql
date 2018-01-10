@@ -2,6 +2,24 @@
 
 set -e
 
+mysql_upgrade() {
+  echo "Running mysql_upgrade..."
+
+  local exitstatus=0
+  # Hide failures from "already upgraded", otherwise let it bubble up
+  if ! output=$($(brew --prefix mysql@5.7)/bin/mysql_upgrade -u root); then
+    exitstatus="$?"
+    if echo "$output" | grep --quiet "already upgraded"; then
+      exitstatus=0
+    else
+      # If there's some other reason for this, we want to make sure it's heard
+      echo "$output"
+    fi
+  fi
+
+  return $exitstatus
+}
+
 update_my_cnf() {
   CNF_PATH="$(brew --prefix)/etc/my.cnf"
 
@@ -39,7 +57,7 @@ if [[ -d $(brew --prefix mysql@5.6) || -d $(brew --prefix mysql@5.7) ]]; then
     sleep 2
   done
 
-  $(brew --prefix mysql@5.7)/bin/mysql_upgrade -u root
+  mysql_upgrade
 
   # We need to give MySQL to shut down properly, let's not do a restart
   brew services stop mysql@5.7
