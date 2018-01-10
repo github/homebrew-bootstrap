@@ -21,28 +21,15 @@ sql_mode=NO_ENGINE_SUBSTITUTION
 EOM
 }
 
-set +e
-brew ls mysql@5.6 &>/dev/null
-MYSQL_5_6="$?"
 
-brew ls mysql@5.7 &>/dev/null
-MYSQL_5_7="$?"
-set -e
-
-if [[ $MYSQL_5_6 == "0" || $MYSQL_5_7 == "0" ]]; then
-  if [[ $MYSQL_5_6 == "0" ]]; then
-    set +e
-    brew services stop mysql@5.6
-    set -e
-
-    brew uninstall mysql@5.6
+if [[ -d $(brew --prefix mysql@5.6) || -d $(brew --prefix mysql@5.7) ]]; then
+  if [[ -d $(brew --prefix mysql@5.6) ]]; then
+    brew services stop mysql@5.6 || true
     brew install mysql@5.7
   fi
 
-  if [[ $MYSQL_5_7 == "0" ]]; then
-    set +e
-    brew services stop mysql@5.7
-    set -e
+  if [[ -d $(brew --prefix mysql@5.7) ]]; then
+    brew services stop mysql@5.7 || true
   fi
 
   update_my_cnf
@@ -55,7 +42,7 @@ if [[ $MYSQL_5_6 == "0" || $MYSQL_5_7 == "0" ]]; then
   done
 
   $(brew --prefix mysql@5.7)/bin/mysql_upgrade -u root
-  brew services stop mysql@5.7
+  brew services restart mysql@5.7
   brew services start mysql@5.7
 fi
 
