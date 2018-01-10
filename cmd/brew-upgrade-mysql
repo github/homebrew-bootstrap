@@ -45,10 +45,21 @@ EOM
 if [[ -d $(brew --prefix mysql@5.6) || -d $(brew --prefix mysql@5.7) ]]; then
   if [[ -d $(brew --prefix mysql@5.6) ]]; then
     brew services stop mysql@5.6 || true
+
+    while ! [[ "$(pidof mysqld)" == "" ]]; do
+      echo "Waiting for MySQL to shut down ..."
+      sleep 2
+    done
+
     brew install mysql@5.7
   fi
 
   brew services stop mysql@5.7 || true
+
+  while ! [[ "$(pidof mysqld)" == "" ]]; do
+    echo "Waiting for MySQL to shut down ..."
+    sleep 2
+  done
 
   update_my_cnf
 
@@ -63,13 +74,18 @@ if [[ -d $(brew --prefix mysql@5.6) || -d $(brew --prefix mysql@5.7) ]]; then
 
   # We need to give MySQL to shut down properly, let's not do a restart
   brew services stop mysql@5.7
+
+  while ! [[ "$(pidof mysqld)" == "" ]]; do
+    echo "Waiting for MySQL to shut down ..."
+    sleep 2
+  done
+
   brew services start mysql@5.7
 
   while ! $(brew --prefix mysql@5.7)/bin/mysqladmin ping --silent; do
     echo "Waiting for MySQL to be available..."
     sleep 2
   done
-
 fi
 
 exit 0
