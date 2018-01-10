@@ -2,7 +2,7 @@
 
 set -e
 
-mysql_upgrade() {
+upgrade_mysql() {
   echo "Running mysql_upgrade..."
 
   local exitstatus=0
@@ -22,6 +22,8 @@ mysql_upgrade() {
 
 update_my_cnf() {
   CNF_PATH="$(brew --prefix)/etc/my.cnf"
+
+  touch $CNF_PATH
 
   echo "Backing up old my.cnf file..."
   cp -vf $CNF_PATH "$CNF_PATH.github"
@@ -43,10 +45,21 @@ EOM
 if [[ -d $(brew --prefix mysql@5.6) || -d $(brew --prefix mysql@5.7) ]]; then
   if [[ -d $(brew --prefix mysql@5.6) ]]; then
     brew services stop mysql@5.6 || true
+
+    while ! [[ "$(pidof mysqld)" == "" ]]; do
+      echo "Waiting for MySQL to shut down ..."
+      sleep 2
+    done
+
     brew install mysql@5.7
   fi
 
   brew services stop mysql@5.7 || true
+
+  while ! [[ "$(pidof mysqld)" == "" ]]; do
+    echo "Waiting for MySQL to shut down ..."
+    sleep 2
+  done
 
   update_my_cnf
 
@@ -57,9 +70,22 @@ if [[ -d $(brew --prefix mysql@5.6) || -d $(brew --prefix mysql@5.7) ]]; then
     sleep 2
   done
 
-  mysql_upgrade
+  upgrade_mysql
 
-  brew services restart mysql@5.7
+  # We need to give MySQL to shut down properly, let's not do a restart
+  brew services stop mysql@5.7
+
+  while ! [[ "$(pidof mysqld)" == "" ]]; do
+    echo "Waiting for MySQL to shut down ..."
+    sleep 2
+  done
+
+  brew services start mysql@5.7
+
+  while ! $(brew --prefix mysql@5.7)/bin/mysqladmin ping --silent; do
+    echo "Waiting for MySQL to be available..."
+    sleep 2
+  done
 fi
 
 exit 0
