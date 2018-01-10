@@ -1,3 +1,6 @@
 script:
   - bash -n cmd/*
   - ruby -wc cmd/*.rb >/dev/null
+
+notifications:
+  email: false
