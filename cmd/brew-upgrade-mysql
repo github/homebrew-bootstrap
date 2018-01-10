@@ -23,6 +23,8 @@ upgrade_mysql() {
 update_my_cnf() {
   CNF_PATH="$(brew --prefix)/etc/my.cnf"
 
+  touch $CNF_PATH
+
   echo "Backing up old my.cnf file..."
   cp -vf $CNF_PATH "$CNF_PATH.github"
 
