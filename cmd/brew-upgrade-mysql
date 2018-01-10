@@ -64,6 +64,12 @@ if [[ -d $(brew --prefix mysql@5.6) || -d $(brew --prefix mysql@5.7) ]]; then
   # We need to give MySQL to shut down properly, let's not do a restart
   brew services stop mysql@5.7
   brew services start mysql@5.7
+
+  while ! $(brew --prefix mysql@5.7)/bin/mysqladmin ping --silent; do
+    echo "Waiting for MySQL to be available..."
+    sleep 2
+  done
+
 fi
 
 exit 0
