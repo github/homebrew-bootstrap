@@ -67,7 +67,7 @@ class ElasticsearchAT17 < Formula
     ln_s etc/"elasticsearch", prefix/"config"
   end
 
-  def caveats; <<-EOS.undent
+  def caveats; <<~EOS
     Data:    #{var}/elasticsearch/#{cluster_name}/
     Logs:    #{var}/log/elasticsearch/#{cluster_name}.log
     Plugins: #{var}/lib/elasticsearch/plugins/
@@ -77,35 +77,35 @@ class ElasticsearchAT17 < Formula
 
   plist_options :manual => "elasticsearch --config=#{HOMEBREW_PREFIX}/opt/elasticsearch@1.7/config/elasticsearch.yml"
 
-  def plist; <<-EOS.undent
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-      <plist version="1.0">
+  def plist; <<~EOS
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+      <dict>
+        <key>KeepAlive</key>
+        <true/>
+        <key>Label</key>
+        <string>#{plist_name}</string>
+        <key>ProgramArguments</key>
+        <array>
+          <string>#{opt_bin}/elasticsearch</string>
+          <string>--config=#{prefix}/config/elasticsearch.yml</string>
+        </array>
+        <key>EnvironmentVariables</key>
         <dict>
-          <key>KeepAlive</key>
-          <true/>
-          <key>Label</key>
-          <string>#{plist_name}</string>
-          <key>ProgramArguments</key>
-          <array>
-            <string>#{opt_bin}/elasticsearch</string>
-            <string>--config=#{prefix}/config/elasticsearch.yml</string>
-          </array>
-          <key>EnvironmentVariables</key>
-          <dict>
-            <key>ES_JAVA_OPTS</key>
-            <string>-Xss200000</string>
-          </dict>
-          <key>RunAtLoad</key>
-          <true/>
-          <key>WorkingDirectory</key>
-          <string>#{var}</string>
-          <key>StandardErrorPath</key>
-          <string>#{var}/log/#{name}.log</string>
-          <key>StandardOutPath</key>
-          <string>#{var}/log/#{name}.log</string>
+          <key>ES_JAVA_OPTS</key>
+          <string>-Xss200000</string>
         </dict>
-      </plist>
+        <key>RunAtLoad</key>
+        <true/>
+        <key>WorkingDirectory</key>
+        <string>#{var}</string>
+        <key>StandardErrorPath</key>
+        <string>#{var}/log/#{name}.log</string>
+        <key>StandardOutPath</key>
+        <string>#{var}/log/#{name}.log</string>
+      </dict>
+    </plist>
     EOS
   end
 
