@@ -41,51 +41,42 @@ sql_mode=NO_ENGINE_SUBSTITUTION
 EOM
 }
 
+mysql_stop() {
+  brew services stop $1 || true
+  while ! [[ "$(pgrep mysqld)" == "" ]]; do
+    echo "Waiting for MySQL to shut down ..." 
+    sleep 2
+  done
+}
+
+mysql_start() {
+  brew services start $1
+  while ! $(brew --prefix "$1")/bin/mysqladmin ping --silent; do
+    echo "Waiting for MySQL to be available..."
+    sleep 2
+  done
+}
 
 if [[ -d $(brew --prefix mysql@5.6) || -d $(brew --prefix mysql@5.7) ]]; then
   if [[ -d $(brew --prefix mysql@5.6) ]]; then
-    brew services stop mysql@5.6 || true
-
-    while ! [[ "$(pidof mysqld)" == "" ]]; do
-      echo "Waiting for MySQL to shut down ..."
-      sleep 2
-    done
+    mysql_stop "mysql@5.6"
 
     brew install mysql@5.7
   fi
 
-  brew services stop mysql@5.7 || true
-
-  while ! [[ "$(pidof mysqld)" == "" ]]; do
-    echo "Waiting for MySQL to shut down ..."
-    sleep 2
-  done
+  mysql_stop "mysql@5.7"
 
   update_my_cnf
 
-  brew services start mysql@5.7
+  mysql_start "mysql@5.7"
 
-  while ! $(brew --prefix mysql@5.7)/bin/mysqladmin ping --silent; do
-    echo "Waiting for MySQL to be available..."
-    sleep 2
-  done
 
-  upgrade_mysql
+  upgraded=$(upgrade_mysql)
 
-  # We need to give MySQL to shut down properly, let's not do a restart
-  brew services stop mysql@5.7
-
-  while ! [[ "$(pidof mysqld)" == "" ]]; do
-    echo "Waiting for MySQL to shut down ..."
-    sleep 2
-  done
-
-  brew services start mysql@5.7
-
-  while ! $(brew --prefix mysql@5.7)/bin/mysqladmin ping --silent; do
-    echo "Waiting for MySQL to be available..."
-    sleep 2
-  done
+  if [[ $upgraded -eq 0 ]]; then
+    mysql_stop "mysql@5.7"
+    mysql_start "mysql@5.7"
+  fi
 fi
 
 exit 0
