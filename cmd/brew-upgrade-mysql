@@ -1,34 +1,55 @@
 #!/bin/bash
+#
+# This is a script to insure that the correct version of MySQL is
+# installed on dev environments. This is most useful during major
+# version upgrades. It is also useful if we need to update the developer
+# my.cnf file. It also ensures that `mysql_upgrade` has been run on the
+# MySQL servers so no unwanted behaviors happen.
+#
+# This can be run with "latest" as an option to upgrade to the latest
+# minor version on MySQL.
+#
 
 set -e
 
-upgrade_mysql() {
-  echo "Running mysql_upgrade..."
-
-  local exitstatus=0
-  # Hide failures from "already upgraded", otherwise let it bubble up
-  if ! output=$($(brew --prefix mysql@5.7)/bin/mysql_upgrade -u root); then
-    exitstatus="$?"
-    if echo "$output" | grep --quiet "already upgraded"; then
-      exitstatus=0
-    else
-      # If there's some other reason for this, we want to make sure it's heard
-      echo "$output"
+install_mysql() {
+  current_mysql=$(brew list | grep -E "^mysql(@\\d\\.\\d)?$")
+  if ! [[ "${current_mysql}" == "mysql" || "${current_mysql}" == "mysql@${mysql_version}" ]]; then
+    if [ -n "${current_mysql}" ]; then
+      echo -n "Uninstalling old version of MySQL... "
+      brew services stop $current_mysql &> /dev/null || true
+      brew uninstall $current_mysql &> /dev/null
+      echo "done"
     fi
+    echo -n "Installing new version of MySQL... "
+    brew install mysql@${mysql_version} &> /dev/null
+    echo "done"
+  elif [ "${dot_upgrade}" = "latest" ]; then
+    v=$(brew info mysql --json=v1 | jq -r ".[] | .versions.stable")
+    echo -n "Upgrading version of MySQL to ${v}... "
+    brew services stop mysql@${mysql_version} &> /dev/null || true
+    brew upgrade mysql@${mysql_version} &> /dev/null || true
+    echo "done"
   fi
+  if ! is_mysql_up; then
+    mysql_start
+  fi
+}
 
-  return $exitstatus
+upgrade_mysql() {
+  if $mysql_dir/bin/mysql_upgrade -u root &>/dev/null; then
+    restart_mysql=true
+  fi
 }
 
 update_my_cnf() {
   CNF_PATH="$(brew --prefix)/etc/my.cnf"
-
   touch $CNF_PATH
 
-  echo "Backing up old my.cnf file..."
-  cp -vf $CNF_PATH "$CNF_PATH.github"
+  TMP_PATH="/tmp/my.cnf"
+  rm -f "$TMP_PATH"
 
-  cat > $CNF_PATH <<-EOM
+  cat > $TMP_PATH <<-EOM
 # For advice on how to change settings please see
 # http://dev.mysql.com/doc/refman/5.7/en/server-configuration-defaults.html
 
@@ -39,53 +60,56 @@ optimizer_switch='index_merge_intersection=OFF'
 query_cache_size=0
 sql_mode=NO_ENGINE_SUBSTITUTION
 EOM
+
+if ! diff -q "$CNF_PATH" "$TMP_PATH"; then
+  echo "Backing up and replacing old my.cnf file"
+  cp -vf "$CNF_PATH" "$CNF_PATH.github"
+  mv -f "$TMP_PATH" "$CNF_PATH"
+  restart_mysql=true
+fi
 }
 
+is_mysql_up() {
+  $mysql_dir/bin/mysqladmin ping --silent -uroot &> /dev/null
+}
 
-if [[ -d $(brew --prefix mysql@5.6) || -d $(brew --prefix mysql@5.7) ]]; then
-  if [[ -d $(brew --prefix mysql@5.6) ]]; then
-    brew services stop mysql@5.6 || true
-
-    while ! [[ "$(pidof mysqld)" == "" ]]; do
-      echo "Waiting for MySQL to shut down ..."
-      sleep 2
-    done
-
-    brew install mysql@5.7
-  fi
-
-  brew services stop mysql@5.7 || true
-
-  while ! [[ "$(pidof mysqld)" == "" ]]; do
-    echo "Waiting for MySQL to shut down ..."
+mysql_stop() {
+  echo -n "Waiting for MySQL to shut down..." 
+  brew services stop mysql > /dev/null || true
+  while pgrep -q -f "${mysql_dir}.*mysqld"; do
+    echo -n "."
     sleep 2
   done
+  echo " done"
+}
 
-  update_my_cnf
-
-  brew services start mysql@5.7
-
-  while ! $(brew --prefix mysql@5.7)/bin/mysqladmin ping --silent; do
-    echo "Waiting for MySQL to be available..."
+mysql_start() {
+  echo -n "Waiting for MySQL to be available..."
+  brew services start mysql > /dev/null
+  while ! is_mysql_up; do
+    echo -n "."
     sleep 2
   done
+  echo " done"
+}
 
-  upgrade_mysql
+# --
+mysql_version="5.7"
+mysql_dir=$(brew --prefix mysql@${mysql_version})
+restart_mysql=false
+dot_upgrade="${1}"
 
-  # We need to give MySQL to shut down properly, let's not do a restart
-  brew services stop mysql@5.7
+echo "Checking that MySQL is up to date."
+install_mysql
+upgrade_mysql
+update_my_cnf
 
-  while ! [[ "$(pidof mysqld)" == "" ]]; do
-    echo "Waiting for MySQL to shut down ..."
-    sleep 2
-  done
-
-  brew services start mysql@5.7
-
-  while ! $(brew --prefix mysql@5.7)/bin/mysqladmin ping --silent; do
-    echo "Waiting for MySQL to be available..."
-    sleep 2
-  done
+if [ "$restart_mysql" = "true" ]; then
+  echo -n "Restarting MySQL... "
+  mysql_stop
+  mysql_start
+  echo -n "done"
 fi
+echo "MySQL is ready."
 
 exit 0
