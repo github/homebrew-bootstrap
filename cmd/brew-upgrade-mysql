@@ -1,13 +1,11 @@
 #!/bin/bash
 #
-# This is a script to insure that the correct version of MySQL is
-# installed on dev environments. This is most useful during major
-# version upgrades. It is also useful if we need to update the developer
-# my.cnf file. It also ensures that `mysql_upgrade` has been run on the
-# MySQL servers so no unwanted behaviors happen.
+# brew-upgrade-mysql: Tool to upgrade MySQL version used by GitHub prod
 #
-# This can be run with "latest" as an option to upgrade to the latest
-# minor version on MySQL.
+# * Upgrades from MySQL 5.6 to 5.7
+# * Upgrades 5.7 to latest dot release
+# * Verifies that `mysql_upgrade` has run to update all system schemas
+# * Updates my.cnf to match the my.cnf (maintained in this script.)
 #
 
 set -e
@@ -22,12 +20,17 @@ install_mysql() {
     fi
     echo "Installing new version of MySQL... "
     brew install mysql@${mysql_version}
-  elif [ "${dot_upgrade}" = "latest" ]; then
-    v=$(brew info mysql --json=v1 | jq -r ".[] | .versions.stable")
-    echo "Upgrading version of MySQL to ${v}... "
+  fi
+
+  # Upgrade to latest dot release
+  current_version=$(brew info mysql --json=v1 | jq -r ".[] | .installed[].version")
+  latest_version=$(brew info mysql --json=v1 | jq -r ".[] | .versions.stable")
+  if ! [ "${current_version}" = "${latest_version}" ]; then
+    echo "Upgrading version of MySQL to ${latest_version}... "
     brew services stop mysql@${mysql_version} || true
     brew upgrade mysql@${mysql_version} || true
   fi
+
   if ! is_mysql_up; then
     mysql_start
   fi
@@ -94,7 +97,6 @@ mysql_start() {
 mysql_version="5.7"
 mysql_dir=$(brew --prefix mysql@${mysql_version})
 restart_mysql=false
-dot_upgrade="${1}"
 
 echo "Checking that MySQL is up to date."
 install_mysql
