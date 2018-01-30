@@ -27,12 +27,12 @@ install_mysql() {
   latest_version=$(brew info mysql --json=v1 | jq -r ".[] | .versions.stable")
   if ! [ "${current_version}" = "${latest_version}" ]; then
     echo "Upgrading version of MySQL to ${latest_version}... "
-    brew services stop mysql@${mysql_version} || true
+    mysql_stop
     brew upgrade mysql@${mysql_version} || true
   fi
 
   if ! is_mysql_up; then
-    mysql_start
+    mysql_restart
   fi
 }
 
@@ -83,8 +83,8 @@ mysql_stop() {
   echo " done"
 }
 
-mysql_start() {
-  brew services start mysql
+mysql_restart() {
+  brew services restart mysql
   echo -n "Waiting for MySQL to be available..."
   while ! is_mysql_up; do
     echo -n "."
@@ -105,8 +105,7 @@ update_my_cnf
 
 if [ "$restart_mysql" = "true" ]; then
   echo -n "Restarting MySQL... "
-  mysql_stop
-  mysql_start
+  mysql_restart
   echo -n "done"
 fi
 echo "MySQL is ready."
