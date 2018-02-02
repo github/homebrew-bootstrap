@@ -17,7 +17,7 @@ root = ARGV.shift || "."
 input = ARGV.shift || "config/dev/nginx.conf.erb"
 
 if !name || !root || !input
-  abort "Usage: brew setup-nginx-conf [--root] <project_name> <project_root_path> <nginx.conf.erb>"
+  abort "Usage: brew setup-nginx-conf [--root] [--extra-val=variable=value] <project_name> <project_root_path> <nginx.conf.erb>"
 end
 
 abort "Error: #{input} is not a .erb file!" unless input.end_with? ".erb"
@@ -25,8 +25,20 @@ abort "Error: #{input} is not a .erb file!" unless input.end_with? ".erb"
 root = File.expand_path root
 input = File.expand_path input
 
+# Find extra variables in the form of --extra-val=variable=value
+# Using a hash and ERB#result_with_hash would be nice, but it didn't
+# appear until Ruby 2.5. :/
+variables = binding
+ARGV.delete_if do |argument|
+  next unless argument.start_with? "--extra-val="
+  variable, value = argument.sub(/^--extra-val=/, "").split("=", 2)
+  variables.local_variable_set(variable.to_sym, value)
+
+  true
+end
+
 data = IO.read input
-conf = ERB.new(data).result(binding)
+conf = ERB.new(data).result(variables)
 output = input.sub(/.erb$/, "")
 output.sub!(/.conf$/, ".root.conf") if root_configuration
 IO.write output, conf
