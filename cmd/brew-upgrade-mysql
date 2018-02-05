@@ -23,7 +23,7 @@ install_mysql() {
   fi
 
   # In case jq is not installed
-  brew install jq &> /dev/null
+  brew list jq &>/dev/null || brew install jq
 
   # Upgrade to latest dot release
   current_version=$(brew info mysql --json=v1 | jq -r ".[] | .installed[].version")
