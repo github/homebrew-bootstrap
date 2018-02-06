@@ -23,7 +23,7 @@ install_mysql() {
   fi
 
   # Upgrade to latest dot release
-  current_version=$(brew info mysql --json=v1 | jq -r ".[] | .installed[].version")
+  current_version=$(brew info mysql --json=v1 | jq -r ".[] | .installed[-1].version")
   latest_version=$(brew info mysql --json=v1 | jq -r ".[] | .versions.stable")
   if ! [ "${current_version}" = "${latest_version}" ]; then
     echo "Upgrading version of MySQL to ${latest_version}... "
