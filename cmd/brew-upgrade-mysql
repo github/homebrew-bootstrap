@@ -77,7 +77,7 @@ is_mysql_up() {
 }
 
 mysql_stop() {
-  brew services stop mysql || true
+  brew services stop mysql@5.7 || true
   echo -n "Waiting for MySQL to shut down..."
   while pgrep -q -f "${mysql_dir}.*mysqld"; do
     sleep 2
@@ -87,7 +87,7 @@ mysql_stop() {
 }
 
 mysql_restart() {
-  brew services restart mysql
+  brew services restart mysql@5.7
   echo -n "Waiting for MySQL to be available..."
   while ! is_mysql_up; do
     echo -n "."
