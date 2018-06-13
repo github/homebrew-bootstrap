@@ -12,7 +12,7 @@ set -e
 
 install_mysql() {
   current_mysql=$(brew list | grep -E "^mysql(@\\d\\.\\d)?$")
-  if ! [[ "${current_mysql}" == "mysql" || "${current_mysql}" == "mysql@${mysql_version}" ]]; then
+  if ! [[ "${current_mysql}" == "mysql@${mysql_version}" ]]; then
     if [ -n "${current_mysql}" ]; then
       echo "Uninstalling old version of MySQL... "
       brew services stop $current_mysql || true
@@ -26,8 +26,8 @@ install_mysql() {
   brew list jq &>/dev/null || brew install jq
 
   # Upgrade to latest dot release
-  current_version=$(brew info mysql --json=v1 | jq -r ".[] | .installed[-1].version")
-  latest_version=$(brew info mysql --json=v1 | jq -r ".[] | .versions.stable")
+  current_version=$(brew info mysql@${mysql_version} --json=v1 | jq -r ".[] | .installed[-1].version")
+  latest_version=$(brew info mysql@${mysql_version} --json=v1 | jq -r ".[] | .versions.stable")
   if ! [ "${current_version}" = "${latest_version}" ]; then
     echo "Upgrading version of MySQL to ${latest_version}... "
     mysql_stop
@@ -77,7 +77,7 @@ is_mysql_up() {
 }
 
 mysql_stop() {
-  brew services stop mysql || true
+  brew services stop mysql@${mysql_version} || true
   echo -n "Waiting for MySQL to shut down..."
   while pgrep -q -f "${mysql_dir}.*mysqld"; do
     sleep 2
@@ -87,7 +87,7 @@ mysql_stop() {
 }
 
 mysql_restart() {
-  brew services restart mysql
+  brew services restart mysql@${mysql_version}
   echo -n "Waiting for MySQL to be available..."
   while ! is_mysql_up; do
     echo -n "."
