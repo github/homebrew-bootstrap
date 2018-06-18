@@ -16,7 +16,7 @@ install_mysql() {
     if [ -n "${current_mysql}" ]; then
       echo "Uninstalling old version of MySQL... "
       brew services stop $current_mysql || true
-      brew uninstall $current_mysql
+      brew uninstall --force $current_mysql
     fi
     echo "Installing new version of MySQL... "
     brew install mysql@${mysql_version}
