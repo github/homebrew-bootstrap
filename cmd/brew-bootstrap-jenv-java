@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs Java.
+# Installs Zulu JDK.
 set -e
 
 if [ "$1" = "--debug" ]; then
@@ -57,7 +57,7 @@ trap "cleanup" EXIT
 
 BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-if ! which rbenv &>/dev/null; then
+if ! which jenv &>/dev/null; then
   abort "Error: you need to 'brew install jenv'!"
 fi
 
