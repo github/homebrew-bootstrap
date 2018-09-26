@@ -75,8 +75,8 @@ tap "github/bootstrap"
 cask "$cask_name"
 EOS
 
-  zulu_version_string="$(echo $JAVA_REQUESTED | sed 's,\(.*\)\.,\1_,')"
-  yes | jenv add "/Library/Java/JavaVirtualMachines/zulu${zulu_version_string}.jdk/Contents/Home"
+  java_home=$(/usr/libexec/java_home -v $JAVA_REQUESTED)
+  yes | jenv add $java_home
 fi
 
 if [ "$(jenv exec java -version 2>&1)" != "$(java -version 2>&1)" ]; then
