@@ -68,7 +68,14 @@ if ! jenv version-name &>/dev/null; then
     JAVA_REQUESTED="$(jenv local)"
   fi
 
-  cask_version="$(echo $JAVA_REQUESTED | awk -F. '{ print $2 }')"
+  # Prior to Java 9, the major version is the second token, e.g. 1.8.0
+  # From Java 9 on, the major version is the first token, e.g. 9.0.0
+  if [[ "$JAVA_REQUESTED" -ge 9 ]]; then
+    cask_version="$(echo $JAVA_REQUESTED | awk -F. '{ print $1 }')"
+  else
+    cask_version="$(echo $JAVA_REQUESTED | awk -F. '{ print $2 }')"
+  fi
+
   cask_name="github/bootstrap/zulu${cask_version}"
   brew bundle --file=- <<-EOS
 tap "github/bootstrap"
