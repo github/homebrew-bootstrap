@@ -70,7 +70,7 @@ if ! jenv version-name &>/dev/null; then
 
   # Prior to Java 9, the major version is the second token, e.g. 1.8.0
   # From Java 9 on, the major version is the first token, e.g. 9.0.0
-  if [[ "$JAVA_REQUESTED" -ge 9 ]]; then
+  if [[ "$(echo $JAVA_REQUESTED | awk -F. '{ print $1 }')" -ge 9 ]]; then
     cask_version="$(echo $JAVA_REQUESTED | awk -F. '{ print $1 }')"
   else
     cask_version="$(echo $JAVA_REQUESTED | awk -F. '{ print $2 }')"
