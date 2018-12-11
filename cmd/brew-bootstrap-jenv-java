@@ -76,7 +76,18 @@ if ! jenv version-name &>/dev/null; then
     cask_version="$(echo $JAVA_REQUESTED | awk -F. '{ print $2 }')"
   fi
 
-  cask_name="github/bootstrap/zulu${cask_version}"
+  cask_shortname="zulu${cask_version}"
+  if ! [[ -f "$BASE_PATH/Casks/${cask_shortname}.rb" ]]; then
+    echo "Error: couldn't find a definition for ${cask_shortname}."
+    echo "hint: This script only supports Zulu JVMs."
+    echo "hint: For versions before Java 9, use the 1.x format, i.e. 1.8 or 1.8.0.181"
+    echo "hint: For versions 9 and up, the major version comes first, i.e. 11.0 or 11.0.1"
+    echo "hint: If the requested JVM still can't be found, you may not have requested a supported version."
+    echo "hint: Leave off the leading \"openjdk-\" or \"openjdk64-\"."
+    exit 1
+  fi
+
+  cask_name="github/bootstrap/${cask_shortname}"
   brew bundle --file=- <<-EOS
 tap "github/bootstrap"
 cask "$cask_name"
