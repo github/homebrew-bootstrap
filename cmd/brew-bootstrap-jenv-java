@@ -76,6 +76,12 @@ if ! jenv version-name &>/dev/null; then
     JAVA_REQUESTED="$(jenv local)"
   fi
 
+  if ! [[ "$JAVA_REQUESTED" =~ "." ]]; then
+    warn "Error: requested Java version, \"$JAVA_REQUESTED\", is invalid."
+    warn "hint: Java versions must contain a period."
+    abort "hint: For example, instead of \"11\", use \"11.0\"."
+  fi
+
   # Prior to Java 9, the major version is the second token, e.g. 1.8.0
   # From Java 9 on, the major version is the first token, e.g. 9.0.0
   if [[ "$(echo $JAVA_REQUESTED | awk -F. '{ print $1 }')" -ge 9 ]]; then
