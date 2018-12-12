@@ -40,6 +40,10 @@ abort_with_shell_setup_message() {
   esac
 }
 
+abort_with_jenv_path_message() {
+  abort "Error: the $(jenv root)/versions path does not exist. Please create it."
+}
+
 cleanup() {
   set +e
   if [ -n "$EXPECTED_EXIT" ]; then
@@ -59,6 +63,10 @@ BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if ! which jenv &>/dev/null; then
   abort "Error: you need to 'brew install jenv'!"
+fi
+
+if ! [[ -d "$(jenv root)/versions" ]]; then
+  abort_with_jenv_path_message
 fi
 
 if ! jenv version-name &>/dev/null; then
