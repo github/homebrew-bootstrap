@@ -40,6 +40,10 @@ abort_with_shell_setup_message() {
   esac
 }
 
+abort_with_jenv_path_message() {
+  abort "Error: the $(jenv root)/versions path does not exist. Please create it."
+}
+
 cleanup() {
   set +e
   if [ -n "$EXPECTED_EXIT" ]; then
@@ -61,6 +65,10 @@ if ! which jenv &>/dev/null; then
   abort "Error: you need to 'brew install jenv'!"
 fi
 
+if ! [[ -d "$(jenv root)/versions" ]]; then
+  abort_with_jenv_path_message
+fi
+
 if ! jenv version-name &>/dev/null; then
   if ! [[ -z "$JENV_VERSION" ]]; then
     JAVA_REQUESTED="$JENV_VERSION"
@@ -68,15 +76,31 @@ if ! jenv version-name &>/dev/null; then
     JAVA_REQUESTED="$(jenv local)"
   fi
 
+  if ! [[ "$JAVA_REQUESTED" =~ "." ]]; then
+    warn "Error: requested Java version, \"$JAVA_REQUESTED\", is invalid."
+    warn "hint: Java versions must contain a period."
+    abort "hint: For example, instead of \"11\", use \"11.0\"."
+  fi
+
   # Prior to Java 9, the major version is the second token, e.g. 1.8.0
   # From Java 9 on, the major version is the first token, e.g. 9.0.0
-  if [[ "$JAVA_REQUESTED" -ge 9 ]]; then
+  if [[ "$(echo $JAVA_REQUESTED | awk -F. '{ print $1 }')" -ge 9 ]]; then
     cask_version="$(echo $JAVA_REQUESTED | awk -F. '{ print $1 }')"
   else
     cask_version="$(echo $JAVA_REQUESTED | awk -F. '{ print $2 }')"
   fi
 
-  cask_name="github/bootstrap/zulu${cask_version}"
+  cask_shortname="zulu${cask_version}"
+  if ! [[ -f "$BASE_PATH/Casks/${cask_shortname}.rb" ]]; then
+    warn "Error: couldn't find a definition for ${cask_shortname}."
+    warn "hint: This script only supports Zulu JVMs."
+    warn "hint: For versions before Java 9, use the 1.x format, i.e. 1.8 or 1.8.0.181"
+    warn "hint: For versions 9 and up, the major version comes first, i.e. 11.0 or 11.0.1"
+    warn "hint: If the requested JVM still can't be found, you may not have requested a supported version."
+    abort "hint: Leave off the leading \"openjdk-\" or \"openjdk64-\"."
+  fi
+
+  cask_name="github/bootstrap/${cask_shortname}"
   brew bundle --file=- <<-EOS
 tap "github/bootstrap"
 cask "$cask_name"
