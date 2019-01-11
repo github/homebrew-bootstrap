@@ -11,7 +11,8 @@
 set -e
 
 install_mysql() {
-  current_mysql=$(brew list | grep -E "^mysql(@\\d\\.\\d)?$")
+  current_mysql=$(brew list | grep -E "^mysql(@\\d\\.\\d)?$") || true
+
   if ! [[ "${current_mysql}" == "mysql@${mysql_version}" ]]; then
     if [ -n "${current_mysql}" ]; then
       echo "Uninstalling old version of MySQL... "
