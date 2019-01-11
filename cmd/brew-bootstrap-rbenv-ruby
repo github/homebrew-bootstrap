@@ -89,7 +89,14 @@ if [ "$(rbenv exec ruby --version)" != "$(ruby --version)" ]; then
 fi
 
 (rbenv which bundle &>/dev/null && bundle -v &>/dev/null) || {
-  gem install bundler
+  # Bundler 2 doesn't support Ruby 2.x or below, but
+  # Rubygems won't automatically pick a compatible Bundler for us. Boo!
+  if [[ "$RUBY_REQUESTED" < "2.3" ]]; then
+    gem install bundler -v '<2'
+  else
+    gem install bundler
+  fi
+
   rbenv rehash
 }
 
