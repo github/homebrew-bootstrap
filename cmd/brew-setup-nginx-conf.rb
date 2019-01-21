@@ -3,6 +3,19 @@
 require "erb"
 require "pathname"
 
+# Prunes invalid symlinks; an invalid project can lead
+# to dangling symlinks in the Nginx root, which need
+# to be removed.
+def prune_dangling_symlinks_from prefix
+  base = Pathname.new(prefix)
+  base.children.select(&:symlink?).each do |symlink|
+    if !symlink.realpath.exist?
+      puts "Deleting invalid symlink: #{symlink}"
+      symlink.unlink
+    end
+  end
+end
+
 root_configuration = ARGV.delete "--root"
 if root_configuration
   http_port = 80
@@ -109,12 +122,14 @@ if `brew services list | grep launch_socket_server | grep started` == ""
   end
 end
 
-server = "/usr/local/etc/nginx/servers/#{name}"
+server_base_path = "/usr/local/etc/nginx/servers"
+server = File.join(server_base_path, name)
 unless system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
   abort "Error: failed to symlink #{output} to #{server}!"
 end
 
-system "brew prune >/dev/null"
+prune_dangling_symlinks_from server_base_path
+
 unless started_services
   unless system "brew services restart nginx >/dev/null"
     abort "Error: failed to (re)start nginx!"
