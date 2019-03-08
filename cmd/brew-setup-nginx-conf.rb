@@ -115,7 +115,7 @@ unless system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
   abort "Error: failed to symlink #{output} to #{server}!"
 end
 
-system "brew cleanup --prune >/dev/null"
+system "brew cleanup --prune-prefix >/dev/null"
 
 unless started_services
   unless system "brew services restart nginx >/dev/null"
