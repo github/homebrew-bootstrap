@@ -64,6 +64,7 @@ optimizer_switch='index_merge_intersection=OFF'
 query_cache_size=0
 sql_mode=NO_ENGINE_SUBSTITUTION
 table_open_cache=100
+default-time-zone='+00:00'
 EOM
 
 if ! diff -q "$CNF_PATH" "$TMP_PATH"; then
