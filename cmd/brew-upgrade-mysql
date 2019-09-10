@@ -27,12 +27,10 @@ install_mysql() {
   brew list jq &>/dev/null || brew install jq
 
   # Upgrade to latest dot release
-  current_version=$(brew info mysql@${mysql_version} --json=v1 | jq -r ".[] | .installed[-1].version")
-  latest_version=$(brew info mysql@${mysql_version} --json=v1 | jq -r ".[] | .versions.stable")
-  if ! [ "${current_version}" = "${latest_version}" ]; then
-    echo "Upgrading version of MySQL to ${latest_version}... "
+  if ! brew outdated mysql@${mysql_version}; then
+    echo "Upgrading version of MySQL... "
     mysql_stop
-    brew upgrade mysql@${mysql_version} || true
+    brew upgrade mysql@${mysql_version} || echo "Check for or open an issue on https://github.com/github/homebrew-bootstrap/issues"
   fi
 
   if ! is_mysql_up; then
