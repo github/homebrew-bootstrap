@@ -62,6 +62,11 @@ optimizer_switch='index_merge_intersection=OFF'
 query_cache_size=0
 sql_mode=NO_ENGINE_SUBSTITUTION
 table_open_cache=100
+gtid_mode=ON
+enforce_gtid_consistency=ON
+server_id=1
+log_bin=mysql-bin.log
+expire_logs_days=1
 EOM
 
 if ! diff -q "$CNF_PATH" "$TMP_PATH"; then
