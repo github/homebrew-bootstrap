@@ -110,6 +110,7 @@ if `brew services list | grep launch_socket_server | grep started` == ""
 end
 
 server_base_path = "/usr/local/etc/nginx/servers"
+system "sudo mkdir -p #{server_base_path}"
 server = File.join(server_base_path, name)
 unless system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
   abort "Error: failed to symlink #{output} to #{server}!"
