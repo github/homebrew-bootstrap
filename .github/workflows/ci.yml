@@ -1,0 +1,15 @@
+---
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build-default:
+    name: Build with default Git
+    strategy:
+      matrix:
+         os: [macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v1
+    - run: "bash -n cmd/*"
+    - run: "ruby -wc cmd/*.rb >/dev/null"
