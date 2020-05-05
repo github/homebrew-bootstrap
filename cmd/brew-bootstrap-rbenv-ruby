@@ -2,6 +2,12 @@
 # Installs Ruby and Bundler.
 set -e
 
+if ! [[ -z "$DONT_USE_RBENV" ]]; then
+  echo "Skipping rbenv bootstrap because DONT_USE_RBENV is set."
+  echo "Make sure you handle ruby installation and selection yourself before running bootstrap."
+  exit 0
+fi
+
 if [ "$1" = "--debug" ]; then
   shift
   PRINT_DEBUG="1"
