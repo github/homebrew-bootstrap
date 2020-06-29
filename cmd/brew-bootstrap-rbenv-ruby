@@ -78,9 +78,6 @@ if ! rbenv version-name &>/dev/null; then
     fi
   fi
 
-  HOMEBREW_PREFIX="$(brew --prefix)"
-  export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$HOMEBREW_PREFIX/opt/openssl"
-
   rbenv install --skip-existing "$RUBY_DEFINITION"
 fi
 
