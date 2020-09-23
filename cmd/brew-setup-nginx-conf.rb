@@ -4,13 +4,8 @@ require "erb"
 require "pathname"
 
 root_configuration = ARGV.delete "--root"
-if root_configuration
-  http_port = 80
-  https_port = 443
-else
-  http_port = 8080
-  https_port = 8443
-end
+http_port = 80
+https_port = 443
 
 name = ARGV.shift
 root = ARGV.shift || "."
@@ -66,7 +61,6 @@ end
 
 brewfile = <<~EOS
   brew "launchdns", restart_service: true
-  brew "launch_socket_server"
   brew "nginx", restart_service: true
 EOS
 
@@ -100,12 +94,19 @@ if File.exist? "/etc/pf.anchors/dev.strap"
   system "sudo launchctl unload /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
   system "sudo rm -f /Library/LaunchDaemons/dev.strap.pf.plist"
 end
-if `brew services list | grep launch_socket_server | grep started` == ""
+launch_socket_server_info = `brew services list | grep launch_socket_server | grep started`.chomp
+if launch_socket_server_info != ""
   unless system "sudo -n true > /dev/null"
-    puts "Asking for your password to start launch_socket_server:"
+    puts "Asking for your password to stop launch_socket_server:"
   end
-  unless system "sudo brew services start launch_socket_server >/dev/null"
-    abort "Error: failed to start launch_socket_server!"
+  command = "brew services stop launch_socket_server >/dev/null"
+  run_by_user = launch_socket_server_info.include?("started #{ENV["USER"]}")
+  if !run_by_user
+    command = "sudo #{command}"
+  end
+
+  unless system command
+    abort "Error: failed to stop launch_socket_server!"
   end
 end
 
