@@ -11,7 +11,7 @@
 set -e
 
 install_mysql() {
-  current_mysql=$(brew list | grep -E "^mysql(@\\d\\.\\d)?$") || true
+  current_mysql=$(brew list --formula | grep -E "^mysql(@\\d\\.\\d)?$") || true
 
   if ! [[ "${current_mysql}" == "mysql@${mysql_version}" ]]; then
     if [ -n "${current_mysql}" ]; then
@@ -24,7 +24,7 @@ install_mysql() {
   fi
 
   # In case jq is not installed
-  brew list jq &>/dev/null || brew install jq
+  brew list --formula jq &>/dev/null || brew install jq
 
   # Upgrade to latest dot release
   if [ -n "$(brew outdated mysql@${mysql_version})" ]; then
