@@ -1,28 +1,27 @@
 # Homebrew Bootstrap
-A series of helper scripts to reduce duplication across `script/bootstrap`s.
+
+A series of helper scripts and formulae to reduce duplication across `script/bootstrap`s. Scripts:
 
 - [`brew bootstrap-rbenv-ruby`](cmd/brew-bootstrap-rbenv-ruby): Installs Ruby and Bundler.
 - [`brew report-issue`](cmd/brew-report-issue.rb): Creates and closes failure debugging issues on a project.
 - [`brew bootstrap-nodenv-node`](cmd/brew-bootstrap-nodenv-node): Installs Node and npm.
 - [`brew setup-nginx-conf`](cmd/brew-setup-nginx-conf.rb): Generates and installs a project nginx configuration using erb.
 - [`brew upgrade-mysql`](cmd/brew-upgrade-mysql): Upgrade MySQL from 5.6 to 5.7 and maintain a development `my.cnf` configuration.
-- [`ruby-definitions/`](ruby-definitions): `ruby-build` definitions for GitHub Rubies (from [boxen/puppet-ruby](https://github.com/boxen/puppet-ruby/tree/master/files/definitions)).
+- [`ruby-definitions/`](ruby-definitions): `ruby-build` definitions for GitHub Rubies (from [boxen/puppet-ruby](https://github.com/boxen/puppet-ruby/tree/HEAD/files/definitions)).
 
-## Usage
+## How do I install these scripts/formulae?
 
-```bash
-brew tap github/bootstrap
-brew bootstrap-rbenv-ruby # or any other script
-```
+`brew install github/bootstrap/<formula>`
+
+Or `brew tap github/bootstrap` and then `brew install <formula>`.
 
 ## Status
+
 In active development.
 
-[![Build Status](https://travis-ci.org/github/homebrew-bootstrap.svg)](https://travis-ci.org/github/homebrew-bootstrap)
-
-## Contact
-[@mikemcquaid](https://github.com/mikemcquaid/)
+[@MikeMcQuaid](https://github.com/MikeMcQuaid/)
 
 ## License
+
 Homebrew Bootstrap is licensed under the [MIT License](http://en.wikipedia.org/wiki/MIT_License).
-The full license text is available in [LICENSE.txt](https://github.com/github/homebrew-bootstrap/blob/master/LICENSE.txt).
+The full license text is available in [LICENSE.txt](https://github.com/github/homebrew-bootstrap/blob/HEAD/LICENSE.txt).
