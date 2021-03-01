@@ -1,7 +1,7 @@
 class HiveAT2 < Formula
   desc "Hadoop-based data summarization, query, and analysis"
   homepage "https://hive.apache.org"
-  url "http://archive.apache.org/dist/hive/hive-2.3.2/apache-hive-2.3.2-bin.tar.gz"
+  url "https://www.apache.org/dyn/closer.lua?path=hive/hive-2.3.2/apache-hive-2.3.2-bin.tar.gz"
   sha256 "4635cd38b4e175aa1307122842687b5ec149c554f5c4be699b40b724ec078823"
 
   bottle :unneeded

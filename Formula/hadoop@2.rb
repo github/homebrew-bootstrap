@@ -1,7 +1,7 @@
 class HadoopAT2 < Formula
   desc "Framework for distributed processing of large data sets"
   homepage "https://hadoop.apache.org/"
-  url "https://www.apache.org/dyn/closer.cgi?path=hadoop/common/hadoop-2.8.2/hadoop-2.8.2.tar.gz"
+  url "https://www.apache.org/dyn/closer.lua?path=hadoop/common/hadoop-2.8.2/hadoop-2.8.2.tar.gz"
   mirror "https://archive.apache.org/dist/hadoop/common/hadoop-2.8.2/hadoop-2.8.2.tar.gz"
   sha256 "aea99c7ce8441749d81202bdea431f1024f17ee6e0efb3144226883207cc6292"
 

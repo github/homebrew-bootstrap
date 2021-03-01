@@ -14,7 +14,8 @@ root = ARGV.shift || "."
 input = ARGV.shift || "config/dev/nginx.conf.erb"
 
 if !name || !root || !input
-  abort "Usage: brew setup-nginx-conf [--root] [--extra-val=variable=value] <project_name> <project_root_path> <nginx.conf.erb>"
+  abort "Usage: brew setup-nginx-conf [--root] [--extra-val=variable=value] " \
+        "<project_name> <project_root_path> <nginx.conf.erb>"
 end
 
 abort "Error: #{input} is not a .erb file!" unless input.end_with? ".erb"
