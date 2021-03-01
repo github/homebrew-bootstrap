@@ -10,32 +10,15 @@
 
 set -e
 
-install_mysql() {
-  current_mysql=$(brew list --formula | grep -E "^mysql(@\\d\\.\\d)?$") || true
+uninstall_old_mysql() {
+  current_mysql=$(ls $(brew --cellar) | grep -E "^mysql(@\\d\\.\\d)?$") || true
 
-  if ! [[ "${current_mysql}" == "mysql@${mysql_version}" ]]; then
-    if [ -n "${current_mysql}" ]; then
-      echo "Uninstalling old version of MySQL... "
-      brew services stop $current_mysql || true
-      brew uninstall --force $current_mysql
-    fi
-    echo "Installing new version of MySQL... "
-    brew install mysql@${mysql_version}
-  fi
+  [[ -z "${current_mysql}" ]] && return 0
+  [[ "${current_mysql}" == "mysql@${mysql_version}" ]] && return 0
 
-  # In case jq is not installed
-  brew list --formula jq &>/dev/null || brew install jq
-
-  # Upgrade to latest dot release
-  if [ -n "$(brew outdated mysql@${mysql_version})" ]; then
-    echo "Upgrading version of MySQL... "
-    mysql_stop
-    brew upgrade mysql@${mysql_version} || echo "Check for or open an issue on https://github.com/github/homebrew-bootstrap/issues"
-  fi
-
-  if ! is_mysql_up; then
-    mysql_restart
-  fi
+  echo "Uninstalling ${current_mysql}..."
+  brew services stop $current_mysql || true
+  brew uninstall --force $current_mysql
 }
 
 upgrade_mysql() {
@@ -81,18 +64,11 @@ is_mysql_up() {
   $mysql_dir/bin/mysqladmin ping --silent -uroot &> /dev/null
 }
 
-mysql_stop() {
-  brew services stop mysql@${mysql_version} || true
-  echo -n "Waiting for MySQL to shut down..."
-  while pgrep -q -f "${mysql_dir}.*mysqld"; do
-    sleep 2
-    echo -n "."
-  done
-  echo " done"
-}
-
 mysql_restart() {
+  echo -n "Restarting MySQL... "
   brew services restart mysql@${mysql_version}
+  echo -n "done"
+
   echo -n "Waiting for MySQL to be available..."
   while ! is_mysql_up; do
     echo -n "."
@@ -106,16 +82,13 @@ mysql_version="5.7"
 mysql_dir=$(brew --prefix mysql@${mysql_version})
 restart_mysql=false
 
-echo "Checking that MySQL is up to date."
-install_mysql
+uninstall_old_mysql
 upgrade_mysql
 update_my_cnf
 
 if [ "$restart_mysql" = "true" ]; then
-  echo -n "Restarting MySQL... "
   mysql_restart
-  echo -n "done"
 fi
-echo "MySQL is ready."
+echo "MySQL ${mysql_version} is ready."
 
 exit 0
