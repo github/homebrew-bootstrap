@@ -2,13 +2,13 @@ class KubectlAT114 < Formula
   desc "Kubernetes command-line interface"
   homepage "https://kubernetes.io/"
   url "https://github.com/kubernetes/kubernetes.git",
-      :tag      => "v1.14.10",
-      :revision => "575467a0eaf3ca1f20eb86215b3bde40a5ae617a"
+      tag:      "v1.14.10",
+      revision: "575467a0eaf3ca1f20eb86215b3bde40a5ae617a"
   head "https://github.com/kubernetes/kubernetes.git"
 
-  depends_on "go" => :build
-
   keg_only :versioned_formula
+
+  depends_on "go" => :build
 
   def install
     ENV["GOPATH"] = buildpath
@@ -25,11 +25,11 @@ class KubectlAT114 < Formula
       bin.install "_output/local/bin/darwin/amd64/kubectl"
 
       # Install bash completion
-      output = Utils.popen_read("#{bin}/kubectl completion bash")
+      output = Utils.safe_popen_read("#{bin}/kubectl completion bash")
       (bash_completion/"kubectl").write output
 
       # Install zsh completion
-      output = Utils.popen_read("#{bin}/kubectl completion zsh")
+      output = Utils.safe_popen_read("#{bin}/kubectl completion zsh")
       (zsh_completion/"_kubectl").write output
 
       prefix.install_metafiles

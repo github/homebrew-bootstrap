@@ -33,7 +33,7 @@ class ElasticsearchAT17 < Formula
     # Set up Elasticsearch for local development:
     inreplace "#{prefix}/config/elasticsearch.yml" do |s|
       # 1. Give the cluster a unique name
-      s.gsub!(/#\s*cluster\.name\: elasticsearch/, "cluster.name: #{cluster_name}")
+      s.gsub!(/#\s*cluster\.name: elasticsearch/, "cluster.name: #{cluster_name}")
 
       # 2. Configure paths
       s.sub!(%r{#\s*path\.data: /path/to.+$}, "path.data: #{var}/elasticsearch/")
@@ -41,12 +41,12 @@ class ElasticsearchAT17 < Formula
       s.sub!(%r{#\s*path\.plugins: /path/to.+$}, "path.plugins: #{var}/lib/elasticsearch/plugins")
 
       # 3. Bind to loopback IP for laptops roaming different networks
-      s.gsub!(/#\s*network\.host\: [^\n]+/, "network.host: 127.0.0.1")
+      s.gsub!(/#\s*network\.host: [^\n]+/, "network.host: 127.0.0.1")
     end
 
     inreplace "#{bin}/elasticsearch.in.sh" do |s|
       # Configure ES_HOME
-      s.sub!(%r{#\!/bin/sh\n}, "#!/bin/sh\n\nES_HOME=#{prefix}")
+      s.sub!(%r{#!/bin/sh\n}, "#!/bin/sh\n\nES_HOME=#{prefix}")
       # Configure ES_CLASSPATH paths to use libexec instead of lib
       s.gsub!(%r{ES_HOME/lib/}, "ES_HOME/libexec/")
     end
@@ -67,45 +67,47 @@ class ElasticsearchAT17 < Formula
     ln_s etc/"elasticsearch", prefix/"config"
   end
 
-  def caveats; <<~EOS
-    Data:    #{var}/elasticsearch/#{cluster_name}/
-    Logs:    #{var}/log/elasticsearch/#{cluster_name}.log
-    Plugins: #{var}/lib/elasticsearch/plugins/
-    Config:  #{etc}/elasticsearch/
+  def caveats
+    <<~EOS
+      Data:    #{var}/elasticsearch/#{cluster_name}/
+      Logs:    #{var}/log/elasticsearch/#{cluster_name}.log
+      Plugins: #{var}/lib/elasticsearch/plugins/
+      Config:  #{etc}/elasticsearch/
     EOS
   end
 
-  plist_options :manual => "elasticsearch --config=#{HOMEBREW_PREFIX}/opt/elasticsearch@1.7/config/elasticsearch.yml"
+  plist_options manual: "elasticsearch --config=#{HOMEBREW_PREFIX}/opt/elasticsearch@1.7/config/elasticsearch.yml"
 
-  def plist; <<~EOS
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-      <dict>
-        <key>KeepAlive</key>
-        <true/>
-        <key>Label</key>
-        <string>#{plist_name}</string>
-        <key>ProgramArguments</key>
-        <array>
-          <string>#{opt_bin}/elasticsearch</string>
-          <string>--config=#{prefix}/config/elasticsearch.yml</string>
-        </array>
-        <key>EnvironmentVariables</key>
+  def plist
+    <<~EOS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
         <dict>
-          <key>ES_JAVA_OPTS</key>
-          <string>-Xss200000</string>
+          <key>KeepAlive</key>
+          <true/>
+          <key>Label</key>
+          <string>#{plist_name}</string>
+          <key>ProgramArguments</key>
+          <array>
+            <string>#{opt_bin}/elasticsearch</string>
+            <string>--config=#{prefix}/config/elasticsearch.yml</string>
+          </array>
+          <key>EnvironmentVariables</key>
+          <dict>
+            <key>ES_JAVA_OPTS</key>
+            <string>-Xss200000</string>
+          </dict>
+          <key>RunAtLoad</key>
+          <true/>
+          <key>WorkingDirectory</key>
+          <string>#{var}</string>
+          <key>StandardErrorPath</key>
+          <string>#{var}/log/#{name}.log</string>
+          <key>StandardOutPath</key>
+          <string>#{var}/log/#{name}.log</string>
         </dict>
-        <key>RunAtLoad</key>
-        <true/>
-        <key>WorkingDirectory</key>
-        <string>#{var}</string>
-        <key>StandardErrorPath</key>
-        <string>#{var}/log/#{name}.log</string>
-        <key>StandardOutPath</key>
-        <string>#{var}/log/#{name}.log</string>
-      </dict>
-    </plist>
+      </plist>
     EOS
   end
 

@@ -17,15 +17,16 @@ class HiveAT2 < Formula
       next if file.directory?
 
       (bin/file.basename).write_env_script file,
-        Language::Java.java_home_env("1.7+").merge(:HIVE_HOME => libexec)
+        Language::Java.java_home_env("1.7+").merge(HIVE_HOME: libexec)
     end
   end
 
-  def caveats; <<~EOS
-    Hadoop must be in your path for hive executable to work.
-    If you want to use HCatalog with Pig, set $HCAT_HOME in your profile:
-      export HCAT_HOME=#{opt_libexec}/hcatalog
-  EOS
+  def caveats
+    <<~EOS
+      Hadoop must be in your path for hive executable to work.
+      If you want to use HCatalog with Pig, set $HCAT_HOME in your profile:
+        export HCAT_HOME=#{opt_libexec}/hcatalog
+    EOS
   end
 
   test do

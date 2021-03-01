@@ -2,8 +2,8 @@ class KustomizeAT20 < Formula
   desc "Template-free customization of Kubernetes YAML manifests"
   homepage "https://github.com/kubernetes-sigs/kustomize"
   url "https://github.com/kubernetes-sigs/kustomize.git",
-      :tag      => "v2.0.3",
-      :revision => "a6f65144121d1955266b0cd836ce954c04122dc8"
+      tag:      "v2.0.3",
+      revision: "a6f65144121d1955266b0cd836ce954c04122dc8"
 
   depends_on "go" => :build
 
@@ -11,8 +11,8 @@ class KustomizeAT20 < Formula
     ENV["GOPATH"] = buildpath
     ENV["CGO_ENABLED"] = "0"
 
-    revision = Utils.popen_read("git", "rev-parse", "HEAD").strip
-    tag = Utils.popen_read("git", "describe", "--tags").strip
+    revision = Utils.safe_popen_read("git", "rev-parse", "HEAD").strip
+    tag = Utils.safe_popen_read("git", "describe", "--tags").strip
     dir = buildpath/"src/sigs.k8s.io/kustomize"
     dir.install buildpath.children - [buildpath/".brew_home"]
     cd dir do
@@ -54,6 +54,6 @@ class KustomizeAT20 < Formula
         type: LoadBalancer
     EOS
     output = shell_output("#{bin}/kustomize@2.0 build #{testpath}")
-    assert_match /type:\s+"?LoadBalancer"?/, output
+    assert_match(/type:\s+"?LoadBalancer"?/, output)
   end
 end

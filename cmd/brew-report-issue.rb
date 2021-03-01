@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 # Creates and closes failure debugging issues on a project.
 close = !ARGV.delete("--close").nil?
 user_repo = ARGV.shift
@@ -9,8 +11,8 @@ if user_repo.to_s.empty? || message.to_s.empty?
 end
 
 unless close
-  abort "Error: the issue/comment body should be piped over STDIN!" if STDIN.tty?
-  body = STDIN.read
+  abort "Error: the issue/comment body should be piped over STDIN!" if $stdin.tty?
+  body = $stdin.read
 end
 
 @strap_url = ENV["HOMEBREW_STRAP_URL"]
@@ -40,7 +42,7 @@ if github_username.to_s.empty?
   abort <<~EOS
     Error: your GitHub username is not set! Set it by running Strap:
       #{@strap_url}
-EOS
+  EOS
 end
 @github_username = `git config github.user`.chomp
 @github_username = github_username if @github_username.empty?
@@ -50,7 +52,7 @@ if github_password.to_s.empty?
   abort <<~EOS
     Error: your GitHub password is not set! Set it by running Strap:
       #{@strap_url}
-EOS
+  EOS
 end
 @github_api_password = github_password
 
@@ -61,14 +63,16 @@ require "json"
 
 def http_request(type, url, body = nil)
   uri = URI url
-  request = if type == :post
+  request = case type
+  when :post
     post_request = Net::HTTP::Post.new uri
     post_request.body = body
     post_request
-  elsif type == :get
+  when :get
     Net::HTTP::Get.new uri
   end
   return unless request
+
   request.basic_auth @github_api_username, @github_api_password
   Net::HTTP.start uri.hostname, uri.port, use_ssl: true do |http|
     http.request request
@@ -77,18 +81,19 @@ end
 
 def response_check(response, action)
   return if response.is_a? Net::HTTPSuccess
+
   # If there's bad credentials, erase them.
   credential_helper :reject, @github_credentials if response.code == "401"
-  STDERR.puts "Error: failed to #{action}!"
+  $stderr.puts "Error: failed to #{action}!"
   unless response.body.empty?
     failure = JSON.parse response.body
-    STDERR.puts "--\n#{response.code}: #{failure["message"]}"
+    $stderr.puts "--\n#{response.code}: #{failure["message"]}"
   end
   if response.code == "401"
-    STDERR.puts <<~EOS
+    $stderr.puts <<~EOS
       Error: your GitHub username/access token are not correct! Fix by running Strap:
         #{@strap_url}
-EOS
+    EOS
   end
   exit 1
 end
