@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 # Generates and installs a project nginx configuration using erb.
 require "erb"
 require "pathname"
@@ -12,7 +14,8 @@ root = ARGV.shift || "."
 input = ARGV.shift || "config/dev/nginx.conf.erb"
 
 if !name || !root || !input
-  abort "Usage: brew setup-nginx-conf [--root] [--extra-val=variable=value] <project_name> <project_root_path> <nginx.conf.erb>"
+  abort "Usage: brew setup-nginx-conf [--root] [--extra-val=variable=value] " \
+        "<project_name> <project_root_path> <nginx.conf.erb>"
 end
 
 abort "Error: #{input} is not a .erb file!" unless input.end_with? ".erb"
@@ -26,6 +29,7 @@ input = File.expand_path input
 variables = binding
 ARGV.delete_if do |argument|
   next unless argument.start_with? "--extra-val="
+
   variable, value = argument.sub(/^--extra-val=/, "").split("=", 2)
   variables.local_variable_set(variable.to_sym, value)
 
@@ -56,7 +60,7 @@ unless File.exist? "/usr/local/bin/brew"
   abort <<~EOS
     Error: Homebrew is not in /usr/local. Install it by running Strap:
       #{strap_url}
-EOS
+  EOS
 end
 
 brewfile = <<~EOS
@@ -74,9 +78,7 @@ unless system "echo '#{brewfile}' | brew bundle check --file=- >/dev/null"
 end
 
 if `readlink /etc/resolver 2>/dev/null`.chomp != "/usr/local/etc/resolver"
-  unless system "sudo -n true >/dev/null"
-    puts "Asking for your password to setup *.dev:"
-  end
+  puts "Asking for your password to setup *.dev:" unless system "sudo -n true >/dev/null"
   system "sudo rm -rf /etc/resolver"
   unless system "sudo ln -sf /usr/local/etc/resolver /etc/resolver"
     abort "Error: failed to symlink /usr/local/etc/resolver to /etc/resolver!"
@@ -84,9 +86,7 @@ if `readlink /etc/resolver 2>/dev/null`.chomp != "/usr/local/etc/resolver"
 end
 
 if File.exist? "/etc/pf.anchors/dev.strap"
-  unless system "sudo -n true >/dev/null"
-    puts "Asking for your password to uninstall pf:"
-  end
+  puts "Asking for your password to uninstall pf:" unless system "sudo -n true >/dev/null"
   system "sudo rm /etc/pf.anchors/dev.strap"
   system "sudo grep -v 'dev.strap' /etc/pf.conf | sudo tee /etc/pf.conf"
   system "sudo launchctl unload /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
@@ -96,18 +96,12 @@ if File.exist? "/etc/pf.anchors/dev.strap"
 end
 launch_socket_server_info = `brew services list | grep launch_socket_server | grep started`.chomp
 if launch_socket_server_info != ""
-  unless system "sudo -n true > /dev/null"
-    puts "Asking for your password to stop launch_socket_server:"
-  end
+  puts "Asking for your password to stop launch_socket_server:" unless system "sudo -n true > /dev/null"
   command = "brew services stop launch_socket_server >/dev/null"
   run_by_user = launch_socket_server_info.include?("started #{ENV["USER"]}")
-  if !run_by_user
-    command = "sudo #{command}"
-  end
+  command = "sudo #{command}" unless run_by_user
 
-  unless system command
-    abort "Error: failed to stop launch_socket_server!"
-  end
+  abort "Error: failed to stop launch_socket_server!" unless system command
 end
 
 server_base_path = "/usr/local/etc/nginx/servers"
@@ -119,8 +113,4 @@ end
 
 system "brew cleanup --prune-prefix >/dev/null"
 
-unless started_services
-  unless system "brew services restart nginx >/dev/null"
-    abort "Error: failed to (re)start nginx!"
-  end
-end
+abort "Error: failed to (re)start nginx!" if !started_services && !(system "brew services restart nginx >/dev/null")

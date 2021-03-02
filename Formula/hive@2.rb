@@ -1,8 +1,9 @@
 class HiveAT2 < Formula
   desc "Hadoop-based data summarization, query, and analysis"
   homepage "https://hive.apache.org"
-  url "http://archive.apache.org/dist/hive/hive-2.3.2/apache-hive-2.3.2-bin.tar.gz"
-  sha256 "4635cd38b4e175aa1307122842687b5ec149c554f5c4be699b40b724ec078823"
+  url "https://downloads.apache.org/hive/hive-2.3.8/apache-hive-2.3.8-bin.tar.gz"
+  mirror "https://archive.apache.org/dist/hive/hive-2.3.8/apache-hive-2.3.8-bin.tar.gz"
+  sha256 "3746528298fb70938e30bfbb66f756d1810acafbe86ba84edef7bd3455589176"
 
   bottle :unneeded
 
@@ -17,15 +18,16 @@ class HiveAT2 < Formula
       next if file.directory?
 
       (bin/file.basename).write_env_script file,
-        Language::Java.java_home_env("1.7+").merge(:HIVE_HOME => libexec)
+        Language::Java.java_home_env("1.7+").merge(HIVE_HOME: libexec)
     end
   end
 
-  def caveats; <<~EOS
-    Hadoop must be in your path for hive executable to work.
-    If you want to use HCatalog with Pig, set $HCAT_HOME in your profile:
-      export HCAT_HOME=#{opt_libexec}/hcatalog
-  EOS
+  def caveats
+    <<~EOS
+      Hadoop must be in your path for hive executable to work.
+      If you want to use HCatalog with Pig, set $HCAT_HOME in your profile:
+        export HCAT_HOME=#{opt_libexec}/hcatalog
+    EOS
   end
 
   test do
