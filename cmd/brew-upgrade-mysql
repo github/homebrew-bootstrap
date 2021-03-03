@@ -89,6 +89,6 @@ update_my_cnf
 if [ "$restart_mysql" = "true" ]; then
   mysql_restart
 fi
-echo "MySQL ${mysql_version} is ready."
+echo "mysql@${mysql_version} is up-to-date."
 
 exit 0
