@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# brew-upgrade-mysql: Tool to upgrade MySQL version used by GitHub prod
-#
-# * Upgrades from MySQL 5.6 to 5.7
-# * Upgrades 5.7 to latest dot release
-# * Verifies that `mysql_upgrade` has run to update all system schemas
-# * Updates my.cnf to match the my.cnf (maintained in this script.)
-#
+#:  `Usage: brew-upgrade-mysql`
+#:
+#:  Upgrade `mysql` version used by GitHub production.
+#:
+#:  Upgrades from `mysql` 5.6 to 5.7, upgrades 5.7 to latest patch release, verifies
+#:  that `mysql_upgrade` has run to update all system schemas, updates `my.cnf`
+#:  to match the `my.cnf` maintained in this script.
 
 set -e
 

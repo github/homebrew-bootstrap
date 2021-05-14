@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Generates and installs a project nginx configuration using erb.
+#:  `Usage: brew setup-nginx-conf` [--root] [--extra-val=variable=value]
+#:                               <project_name> <project_root_path> <nginx.conf.erb>
+#:
+#:  Generates and installs a project `nginx` configuration using `erb`.
 require "erb"
 require "pathname"
 
@@ -36,7 +39,7 @@ ARGV.delete_if do |argument|
   true
 end
 
-data = IO.read input
+data = File.read input
 conf = ERB.new(data).result(variables)
 output = input.sub(/.erb$/, "")
 output.sub!(/.conf$/, ".root.conf") if root_configuration
@@ -79,20 +82,20 @@ end
 
 if `readlink /etc/resolver 2>/dev/null`.chomp != "/usr/local/etc/resolver"
   puts "Asking for your password to setup *.dev:" unless system "sudo -n true >/dev/null"
-  system "sudo rm -rf /etc/resolver"
-  unless system "sudo ln -sf /usr/local/etc/resolver /etc/resolver"
+  system "sudo", "rm", "-rf", "/etc/resolver"
+  unless system "sudo", "ln", "-sf", "/usr/local/etc/resolver", "/etc/resolver"
     abort "Error: failed to symlink /usr/local/etc/resolver to /etc/resolver!"
   end
 end
 
 if File.exist? "/etc/pf.anchors/dev.strap"
   puts "Asking for your password to uninstall pf:" unless system "sudo -n true >/dev/null"
-  system "sudo rm /etc/pf.anchors/dev.strap"
+  system "sudo", "rm", "/etc/pf.anchors/dev.strap"
   system "sudo grep -v 'dev.strap' /etc/pf.conf | sudo tee /etc/pf.conf"
   system "sudo launchctl unload /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
   system "sudo launchctl load -w /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
   system "sudo launchctl unload /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
-  system "sudo rm -f /Library/LaunchDaemons/dev.strap.pf.plist"
+  system "sudo", "rm", "-f", "/Library/LaunchDaemons/dev.strap.pf.plist"
 end
 launch_socket_server_info = `brew services list | grep launch_socket_server | grep started`.chomp
 if launch_socket_server_info != ""

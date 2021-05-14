@@ -1,5 +1,7 @@
 #!/bin/bash
-# Installs Ruby and Bundler.
+#:  `Usage: brew bootstrap-rbenv-ruby` [--debug]
+#:
+#:  Installs Ruby and Bundler.
 set -e
 
 if [ "$1" = "--debug" ]; then
