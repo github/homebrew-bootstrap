@@ -1,7 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Creates and closes failure debugging issues on a project.
+#:  `Usage: brew report-issue` [--close] <user/repo> <message> [<STDIN piped body>]
+#:
+#:  Creates and closes failure debugging issues on a project.
 close = !ARGV.delete("--close").nil?
 user_repo = ARGV.shift
 message = ARGV.shift

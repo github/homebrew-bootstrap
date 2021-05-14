@@ -1,5 +1,7 @@
 #!/bin/bash
-# Installs Node and NPM.
+#:  `Usage: brew bootstrap-nodenv-node` [--debug]
+#:
+#:  Installs Node and NPM.
 set -e
 
 if [ "$1" = "--debug" ]; then
