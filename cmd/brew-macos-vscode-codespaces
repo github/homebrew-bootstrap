@@ -40,4 +40,4 @@ if launchctl list | grep -q nginx; then
 fi
 
 # Run VS Code.
-open -b com.microsoft.VSCode .
+open -b com.microsoft.VSCode
