@@ -1,17 +1,20 @@
 # Homebrew Bootstrap
 
-A series of helper scripts and formulae to reduce duplication across `script/bootstrap`s. Scripts:
+A series of helper scripts, casks and formulae to reduce duplication across `script/bootstrap`s. Scripts:
 
+- [`brew bootstrap-jenv-java`](cmd/brew-bootstrap-jenv-java): Installs Zulu JDK.
+- [`brew bootstrap-nodenv-node`](cmd/brew-bootstrap-nodenv-node): Installs Node and NPM.
 - [`brew bootstrap-rbenv-ruby`](cmd/brew-bootstrap-rbenv-ruby): Installs Ruby and Bundler.
+- [`brew macos-vscode-codespaces`](cmd/macos-vscode-codespaces): Get Visual Studio Code ready for running with Codespaces.
 - [`brew report-issue`](cmd/brew-report-issue.rb): Creates and closes failure debugging issues on a project.
-- [`brew bootstrap-nodenv-node`](cmd/brew-bootstrap-nodenv-node): Installs Node and npm.
-- [`brew setup-nginx-conf`](cmd/brew-setup-nginx-conf.rb): Generates and installs a project nginx configuration using erb.
-- [`brew upgrade-mysql`](cmd/brew-upgrade-mysql): Upgrade MySQL from 5.6 to 5.7 and maintain a development `my.cnf` configuration.
-- [`ruby-definitions/`](ruby-definitions): `ruby-build` definitions for GitHub Rubies (from [boxen/puppet-ruby](https://github.com/boxen/puppet-ruby/tree/HEAD/files/definitions)).
+- [`brew setup-nginx-conf`](cmd/brew-setup-nginx-conf.rb): Generates and installs a project `nginx` configuration using `erb`.
+- [`brew upgrade-mysql`](cmd/brew-upgrade-mysql): Upgrade `mysql` version used by GitHub production.
+- [`brew vendor-gem`](cmd/brew-upgrade-mysql): Build and cache a RubyGem for the given `git` repository
+- [`ruby-definitions/`](ruby-definitions): `ruby-build` definitions for GitHub Rubies (migrated from [boxen/puppet-ruby](https://github.com/boxen/puppet-ruby/tree/HEAD/files/definitions)).
 
-## How do I install these scripts/formulae?
+## How do I install these scripts/casks/formulae?
 
-`brew install github/bootstrap/<formula>`
+`brew install github/bootstrap/<cask|formula>`
 
 Or `brew tap github/bootstrap` and then `brew install <formula>`.
 
