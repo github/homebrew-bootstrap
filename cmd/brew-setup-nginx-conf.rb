@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Generates and installs a project nginx configuration using erb.
+#:  `Usage: brew setup-nginx-conf` [--root] [--extra-val=variable=value]
+#:                               <project_name> <project_root_path> <nginx.conf.erb>
+#:
+#:  Generates and installs a project `nginx` configuration using `erb`.
 require "erb"
 require "pathname"
 
