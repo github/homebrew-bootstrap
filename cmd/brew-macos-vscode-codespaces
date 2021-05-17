@@ -29,10 +29,11 @@ if [ "$(readlink /etc/resolver)" != "/usr/local/etc/resolver" ] ||
 fi
 
 # Install launchdns and VS Code.
-brew bundle --quiet --file=- <<RUBY
+(brew bundle --quiet --file=- <<RUBY
 brew "launchdns", restart_service: true
 cask "visual-studio-code"
 RUBY
+) || true
 
 # Stop nginx (if it is already running).
 if launchctl list | grep -q nginx; then
