@@ -5,7 +5,7 @@ A series of helper scripts, casks and formulae to reduce duplication across `scr
 - [`brew bootstrap-jenv-java`](cmd/brew-bootstrap-jenv-java): Installs Zulu JDK.
 - [`brew bootstrap-nodenv-node`](cmd/brew-bootstrap-nodenv-node): Installs Node and NPM.
 - [`brew bootstrap-rbenv-ruby`](cmd/brew-bootstrap-rbenv-ruby): Installs Ruby and Bundler.
-- [`brew macos-vscode-codespaces`](cmd/macos-vscode-codespaces): Get Visual Studio Code ready for running with Codespaces.
+- [`brew macos-vscode-codespaces`](cmd/brew-macos-vscode-codespaces): Get Visual Studio Code ready for running with Codespaces.
 - [`brew report-issue`](cmd/brew-report-issue.rb): Creates and closes failure debugging issues on a project.
 - [`brew setup-nginx-conf`](cmd/brew-setup-nginx-conf.rb): Generates and installs a project `nginx` configuration using `erb`.
 - [`brew upgrade-mysql`](cmd/brew-upgrade-mysql): Upgrade `mysql` version used by GitHub production.
