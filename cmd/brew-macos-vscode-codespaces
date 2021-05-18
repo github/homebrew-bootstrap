@@ -31,7 +31,7 @@ fi
 # Install launchdns and VS Code.
 brew bundle --quiet --file=- <<RUBY
 brew "launchdns", restart_service: true
-cask "visual-studio-code"
+cask "visual-studio-code" unless File.exist?("/Applications/Visual Studio Code.app")
 RUBY
 
 # Stop nginx (if it is already running).
