@@ -16,16 +16,18 @@ if [ ! -x "$(command -v brew 2>/dev/null)" ]; then
   exit 1
 fi
 
+HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/usr/local}"
+
 # Link launchdns' configuration.
-if [ "$(readlink /etc/resolver)" != "/usr/local/etc/resolver" ] ||
+if [ "$(readlink /etc/resolver)" != "${HOMEBREW_PREFIX}/etc/resolver" ] ||
    [ ! -L "/etc/resolver" ]; then
   if ! sudo -n true >/dev/null; then
     echo "We need your user's password to link /etc/resolver with sudo:"
     /usr/bin/sudo -v 2>/dev/null
   fi
-  echo "==> Linking /usr/local/etc/resolver to /etc/resolver"
+  echo "==> Linking ${HOMEBREW_PREFIX}/etc/resolver to /etc/resolver"
   sudo rm -rf /etc/resolver
-  sudo ln -s /usr/local/etc/resolver /etc
+  sudo ln -s "${HOMEBREW_PREFIX}/etc/resolver" /etc
 fi
 
 # Install launchdns and VS Code.
@@ -41,7 +43,7 @@ fi
 
 
 # Install VS Code extensions.
-PATH="/usr/local/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
+PATH="${HOMEBREW_PREFIX}/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
 INSTALLED_EXTENSIONS="$(code --list-extensions)"
 NEEDED_EXTENSIONS=<<EOS
 GitHub.codespaces
