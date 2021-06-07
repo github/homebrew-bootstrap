@@ -16,6 +16,7 @@ if [ ! -x "$(command -v brew 2>/dev/null)" ]; then
   exit 1
 fi
 
+HOMEBREW_PREFIX="$(brew --prefix)"
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/usr/local}"
 
 # Link launchdns' configuration.
