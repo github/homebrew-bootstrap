@@ -45,13 +45,14 @@ fi
 # Install VS Code extensions.
 PATH="${HOMEBREW_PREFIX}/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
 INSTALLED_EXTENSIONS="$(code --list-extensions)"
-NEEDED_EXTENSIONS=<<EOS
+NEEDED_EXTENSIONS=$(cat <<'EOS'
 GitHub.codespaces
 EOS
+)
 
 for EXTENSION in $NEEDED_EXTENSIONS
 do
-  if echo "$EXTENSIONS" | grep -q "$EXTENSION"
+  if echo "$INSTALLED_EXTENSIONS" | grep -q "$EXTENSION"
   then
     continue
   fi
