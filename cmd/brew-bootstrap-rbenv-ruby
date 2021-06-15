@@ -80,6 +80,11 @@ if ! rbenv version-name &>/dev/null; then
     fi
   fi
 
+  # use workaround for necessary for some Ruby versions
+  # https://github.com/ffi/ffi/issues/869#issuecomment-752123090
+  if [ "$(uname -sm)" = "Darwin arm64" ]; then
+    export RUBY_CFLAGS=-DUSE_FFI_CLOSURE_ALLOC
+  fi
   rbenv install --skip-existing "$RUBY_DEFINITION"
 fi
 
