@@ -56,12 +56,18 @@ end
 
 exit unless RUBY_PLATFORM.include? "darwin"
 
+homebrew_prefix = "/usr/local"
+
+if RUBY_PLATFORM.include? "arm64"
+  homebrew_prefix = "/opt/homebrew"
+end
+
 strap_url = ENV["HOMEBREW_STRAP_URL"]
 strap_url ||= "https://strap.githubapp.com"
 
-unless File.exist? "/usr/local/bin/brew"
+unless File.exist? "#{homebrew_prefix}/bin/brew"
   abort <<~EOS
-    Error: Homebrew is not in /usr/local. Install it by running Strap:
+    Error: Homebrew is not in #{homebrew_prefix}. Install it by running Strap:
       #{strap_url}
   EOS
 end
@@ -80,11 +86,11 @@ unless system "echo '#{brewfile}' | brew bundle check --file=- >/dev/null"
   started_services = true
 end
 
-if `readlink /etc/resolver 2>/dev/null`.chomp != "/usr/local/etc/resolver"
+if `readlink /etc/resolver 2>/dev/null`.chomp != "#{homebrew_prefix}/etc/resolver"
   puts "Asking for your password to setup *.dev:" unless system "sudo -n true >/dev/null"
   system "sudo", "rm", "-rf", "/etc/resolver"
-  unless system "sudo", "ln", "-sf", "/usr/local/etc/resolver", "/etc/resolver"
-    abort "Error: failed to symlink /usr/local/etc/resolver to /etc/resolver!"
+  unless system "sudo", "ln", "-sf", "#{homebrew_prefix}/etc/resolver", "/etc/resolver"
+    abort "Error: failed to symlink #{homebrew_prefix}/etc/resolver to /etc/resolver!"
   end
 end
 
@@ -107,7 +113,7 @@ if launch_socket_server_info != ""
   abort "Error: failed to stop launch_socket_server!" unless system command
 end
 
-server_base_path = "/usr/local/etc/nginx/servers"
+server_base_path = "#{homebrew_prefix}/etc/nginx/servers"
 system "mkdir -p '#{server_base_path}'"
 server = File.join(server_base_path, name)
 unless system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
