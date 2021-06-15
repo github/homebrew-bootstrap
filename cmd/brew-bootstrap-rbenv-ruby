@@ -80,6 +80,9 @@ if ! rbenv version-name &>/dev/null; then
     fi
   fi
 
+  if [ "$(uname -sm)" = "Darwin arm64" ]; then
+    export RUBY_CFLAGS=-DUSE_FFI_CLOSURE_ALLOC
+  fi
   rbenv install --skip-existing "$RUBY_DEFINITION"
 fi
 
