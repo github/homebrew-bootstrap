@@ -56,7 +56,7 @@ end
 
 exit unless RUBY_PLATFORM.include? "darwin"
 
-homebrew_prefix = RUBY_PLATFORM.include? "arm64" ? "/opt/homebrew" : "/usr/local"
+homebrew_prefix = RUBY_PLATFORM.include?("arm64") ? "/opt/homebrew" : "/usr/local"
 
 strap_url = ENV["HOMEBREW_STRAP_URL"]
 strap_url ||= "https://strap.githubapp.com"
