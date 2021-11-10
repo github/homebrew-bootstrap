@@ -5,8 +5,6 @@ class ElasticsearchAT17 < Formula
   sha256 "78affc30353730ec245dad1f17de242a4ad12cf808eaa87dd878e1ca10ed77df"
   revision 1
 
-  bottle :unneeded
-
   keg_only :versioned_formula
 
   depends_on "openjdk@8"

@@ -5,8 +5,6 @@ class HadoopAT2 < Formula
   mirror "https://archive.apache.org/dist/hadoop/common/hadoop-2.8.2/hadoop-2.8.2.tar.gz"
   sha256 "aea99c7ce8441749d81202bdea431f1024f17ee6e0efb3144226883207cc6292"
 
-  bottle :unneeded
-
   depends_on "openjdk@8"
 
   def install

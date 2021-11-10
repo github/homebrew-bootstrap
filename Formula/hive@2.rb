@@ -5,8 +5,6 @@ class HiveAT2 < Formula
   mirror "https://archive.apache.org/dist/hive/hive-2.3.8/apache-hive-2.3.8-bin.tar.gz"
   sha256 "3746528298fb70938e30bfbb66f756d1810acafbe86ba84edef7bd3455589176"
 
-  bottle :unneeded
-
   depends_on "hadoop@2"
   depends_on "openjdk@8"
 

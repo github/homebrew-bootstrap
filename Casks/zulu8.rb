@@ -5,6 +5,7 @@ cask "zulu8" do
   url "https://cdn.azul.com/zulu/bin/zulu#{version.after_comma}-jdk#{version.before_comma}-macosx_x64.dmg",
       referer: "https://www.azul.com/downloads/zulu/zulu-mac/"
   name "Azul Zulu Java 8 Standard Edition Development Kit"
+  desc "OpenJDK distribution from Azul"
   homepage "https://www.azul.com/downloads/zulu/zulu-mac/"
 
   depends_on macos: ">= :yosemite"
