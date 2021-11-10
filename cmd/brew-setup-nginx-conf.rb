@@ -43,7 +43,7 @@ data = File.read input
 conf = ERB.new(data).result(variables)
 output = input.sub(/.erb$/, "")
 output.sub!(/.conf$/, ".root.conf") if root_configuration
-IO.write output, conf
+File.write output, conf
 
 exit if root_configuration
 
