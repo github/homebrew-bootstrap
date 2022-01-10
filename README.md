@@ -9,7 +9,7 @@ A series of helper scripts, casks and formulae to reduce duplication across `scr
 - [`brew report-issue`](cmd/brew-report-issue.rb): Creates and closes failure debugging issues on a project.
 - [`brew setup-nginx-conf`](cmd/brew-setup-nginx-conf.rb): Generates and installs a project `nginx` configuration using `erb`.
 - [`brew upgrade-mysql`](cmd/brew-upgrade-mysql): Upgrade `mysql` version used by GitHub production.
-- [`brew vendor-gem`](cmd/brew-upgrade-mysql): Build and cache a RubyGem for the given `git` repository
+- [`brew vendor-gem`](cmd/brew-vendor-gem): Build and cache a RubyGem for the given `git` repository
 - [`ruby-definitions/`](ruby-definitions): `ruby-build` definitions for GitHub Rubies (migrated from [boxen/puppet-ruby](https://github.com/boxen/puppet-ruby/tree/HEAD/files/definitions)).
 
 ## How do I install these scripts/casks/formulae?
