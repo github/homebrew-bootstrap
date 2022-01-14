@@ -1,8 +1,8 @@
-class ElasticsearchAT17 < Formula
+class ElasticsearchAT24 < Formula
   desc "Distributed search & analytics engine"
   homepage "https://www.elastic.co/products/elasticsearch"
-  url "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.7.6.tar.gz"
-  sha256 "78affc30353730ec245dad1f17de242a4ad12cf808eaa87dd878e1ca10ed77df"
+  url "https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.6/elasticsearch-2.4.6.tar.gz"
+  sha256 "5f7e4bb792917bb7ffc2a5f612dfec87416d54563f795d6a70637befef4cfc6f"
   revision 1
 
   keg_only :versioned_formula
@@ -18,63 +18,60 @@ class ElasticsearchAT17 < Formula
     rm_f Dir["bin/*.bat"]
     rm_f Dir["bin/*.exe"]
 
-    # Move libraries to `libexec` directory
-    libexec.install Dir["lib/*.jar"]
-    (libexec/"sigar").install Dir["lib/sigar/*.{jar,dylib}"]
-
     # Install everything else into package directory
-    prefix.install Dir["*"]
-
-    # Remove unnecessary files
-    rm_f Dir["#{lib}/sigar/*"]
+    libexec.install "bin", "config", "lib", "modules"
 
     # Set up Elasticsearch for local development:
-    inreplace "#{prefix}/config/elasticsearch.yml" do |s|
+    inreplace "#{libexec}/config/elasticsearch.yml" do |s|
       # 1. Give the cluster a unique name
-      s.gsub!(/#\s*cluster\.name: elasticsearch/, "cluster.name: #{cluster_name}")
+      s.gsub!(/#\s*cluster\.name: .*/, "cluster.name: #{cluster_name}")
 
       # 2. Configure paths
       s.sub!(%r{#\s*path\.data: /path/to.+$}, "path.data: #{var}/elasticsearch/")
       s.sub!(%r{#\s*path\.logs: /path/to.+$}, "path.logs: #{var}/log/elasticsearch/")
-      s.sub!(%r{#\s*path\.plugins: /path/to.+$}, "path.plugins: #{var}/lib/elasticsearch/plugins")
-
-      # 3. Bind to loopback IP for laptops roaming different networks
-      s.gsub!(/#\s*network\.host: [^\n]+/, "network.host: 127.0.0.1")
     end
 
-    inreplace "#{bin}/elasticsearch.in.sh" do |s|
+    inreplace "#{libexec}/bin/elasticsearch.in.sh" do |s|
       # Configure ES_HOME
-      s.sub!(%r{#!/bin/sh\n}, "#!/bin/sh\n\nES_HOME=#{prefix}")
-      # Configure ES_CLASSPATH paths to use libexec instead of lib
-      s.gsub!(%r{ES_HOME/lib/}, "ES_HOME/libexec/")
+      s.sub!(%r{#!/bin/sh\n}, "#!/bin/sh\n\nES_HOME=#{libexec}")
     end
 
-    inreplace "#{bin}/plugin" do |s|
+    inreplace "#{libexec}/bin/plugin" do |s|
       # Add the proper ES_CLASSPATH configuration
-      s.sub!(/SCRIPT="\$0"/, %Q(SCRIPT="$0"\nES_CLASSPATH=#{libexec}))
+      s.sub!(/SCRIPT="\$0"/, %Q(SCRIPT="$0"\nES_CLASSPATH=#{libexec}/lib))
       # Replace paths to use libexec instead of lib
       s.gsub!(%r{\$ES_HOME/lib/}, "$ES_CLASSPATH/")
     end
+
+    # Move config files into etc
+    (etc/"elasticsearch").install Dir[libexec/"config/*"]
+    (etc/"elasticsearch/scripts").mkpath
+    (libexec/"config").rmtree
+
+    bin.install libexec/"bin/elasticsearch",
+                libexec/"bin/plugin"
+    bin.env_script_all_files(libexec/"bin", Language::Java.java_home_env("1.8"))
   end
 
   def post_install
     # Make sure runtime directories exist
     (var/"elasticsearch/#{cluster_name}").mkpath
     (var/"log/elasticsearch").mkpath
-    (var/"lib/elasticsearch/plugins").mkpath
-    ln_s etc/"elasticsearch", prefix/"config"
+    ln_s etc/"elasticsearch", libexec/"config" unless (libexec/"config").exist?
+    (libexec/"plugins").mkpath
   end
 
   def caveats
     <<~EOS
       Data:    #{var}/elasticsearch/#{cluster_name}/
       Logs:    #{var}/log/elasticsearch/#{cluster_name}.log
-      Plugins: #{var}/lib/elasticsearch/plugins/
+      Plugins: #{libexec}/plugins/
       Config:  #{etc}/elasticsearch/
+      plugin script: #{libexec}/bin/plugin
     EOS
   end
 
-  plist_options manual: "elasticsearch --config=#{HOMEBREW_PREFIX}/opt/elasticsearch@1.7/config/elasticsearch.yml"
+  plist_options manual: "#{HOMEBREW_PREFIX}/opt/elasticsearch@2.4/bin/elasticsearch"
 
   def plist
     <<~EOS
@@ -83,18 +80,15 @@ class ElasticsearchAT17 < Formula
       <plist version="1.0">
         <dict>
           <key>KeepAlive</key>
-          <true/>
+          <false/>
           <key>Label</key>
           <string>#{plist_name}</string>
           <key>ProgramArguments</key>
           <array>
             <string>#{opt_bin}/elasticsearch</string>
-            <string>--config=#{prefix}/config/elasticsearch.yml</string>
           </array>
           <key>EnvironmentVariables</key>
           <dict>
-            <key>ES_JAVA_OPTS</key>
-            <string>-Xss200000</string>
           </dict>
           <key>RunAtLoad</key>
           <true/>
@@ -110,6 +104,15 @@ class ElasticsearchAT17 < Formula
   end
 
   test do
-    system "#{bin}/plugin", "--list"
+    system "#{libexec}/bin/plugin", "list"
+    pid = "#{testpath}/pid"
+    begin
+      mkdir testpath/"config"
+      system "#{bin}/elasticsearch", "-d", "-p", pid, "--path.home", testpath
+      sleep 10
+      system "curl", "-XGET", "localhost:9200/"
+    ensure
+      Process.kill(9, File.read(pid).to_i)
+    end
   end
 end

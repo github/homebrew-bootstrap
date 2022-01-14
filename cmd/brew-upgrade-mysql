@@ -1,0 +1,94 @@
+#!/bin/bash
+#
+#:  `Usage: brew-upgrade-mysql`
+#:
+#:  Upgrade `mysql` version used by GitHub production.
+#:
+#:  Upgrades from `mysql` 5.6 to 5.7, upgrades 5.7 to latest patch release, verifies
+#:  that `mysql_upgrade` has run to update all system schemas, updates `my.cnf`
+#:  to match the `my.cnf` maintained in this script.
+
+set -e
+
+uninstall_old_mysql() {
+  current_mysql=$(ls $(brew --cellar) | grep -E "^mysql(@\\d\\.\\d)?$") || true
+
+  [[ -z "${current_mysql}" ]] && return 0
+  [[ "${current_mysql}" == "mysql@${mysql_version}" ]] && return 0
+
+  echo "Uninstalling ${current_mysql}..."
+  brew services stop $current_mysql || true
+  brew uninstall --force $current_mysql
+}
+
+upgrade_mysql() {
+  if $mysql_dir/bin/mysql_upgrade -u root &>/dev/null; then
+    restart_mysql=true
+  fi
+}
+
+update_my_cnf() {
+  CNF_PATH="$(brew --prefix)/etc/my.cnf"
+  touch $CNF_PATH
+
+  TMP_PATH="/tmp/my.cnf"
+  rm -f "$TMP_PATH"
+
+  cat > $TMP_PATH <<-EOM
+# For advice on how to change settings please see
+# http://dev.mysql.com/doc/refman/5.7/en/server-configuration-defaults.html
+
+[mysqld]
+
+innodb_strict_mode=OFF
+optimizer_switch='index_merge_intersection=OFF'
+query_cache_size=0
+sql_mode=NO_ENGINE_SUBSTITUTION
+table_open_cache=100
+gtid_mode=ON
+enforce_gtid_consistency=ON
+server_id=1
+log_bin=mysql-bin.log
+expire_logs_days=1
+EOM
+
+if ! diff -q "$CNF_PATH" "$TMP_PATH"; then
+  echo "Backing up and replacing old my.cnf file"
+  cp -vf "$CNF_PATH" "$CNF_PATH.github"
+  mv -f "$TMP_PATH" "$CNF_PATH"
+  restart_mysql=true
+fi
+}
+
+is_mysql_up() {
+  $mysql_dir/bin/mysqladmin ping --silent -uroot &> /dev/null
+}
+
+mysql_restart() {
+  echo -n "Restarting MySQL... "
+  brew services restart mysql@${mysql_version}
+  echo -n "done"
+
+  echo -n "Waiting for MySQL to be available..."
+  while ! is_mysql_up; do
+    echo -n "."
+    sleep 2
+  done
+  echo " done"
+}
+
+# --
+mysql_version="5.7"
+mysql_dir=$(brew --prefix mysql@${mysql_version})
+restart_mysql=false
+
+uninstall_old_mysql
+upgrade_mysql
+update_my_cnf
+
+if [ "$restart_mysql" = "true" ]; then
+  mysql_restart
+fi
+echo "mysql@${mysql_version} is up-to-date."
+
+exit 0

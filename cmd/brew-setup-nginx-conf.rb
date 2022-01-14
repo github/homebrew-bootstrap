@@ -1,23 +1,24 @@
 #!/usr/bin/env ruby
-# Generates and installs a project nginx configuration using erb.
+# frozen_string_literal: true
+
+#:  `Usage: brew setup-nginx-conf` [--root] [--extra-val=variable=value]
+#:                               <project_name> <project_root_path> <nginx.conf.erb>
+#:
+#:  Generates and installs a project `nginx` configuration using `erb`.
 require "erb"
 require "pathname"
 
 root_configuration = ARGV.delete "--root"
-if root_configuration
-  http_port = 80
-  https_port = 443
-else
-  http_port = 8080
-  https_port = 8443
-end
+http_port = 80
+https_port = 443
 
 name = ARGV.shift
 root = ARGV.shift || "."
 input = ARGV.shift || "config/dev/nginx.conf.erb"
 
 if !name || !root || !input
-  abort "Usage: brew setup-nginx-conf [--root] <project_name> <project_root_path> <nginx.conf.erb>"
+  abort "Usage: brew setup-nginx-conf [--root] [--extra-val=variable=value] " \
+        "<project_name> <project_root_path> <nginx.conf.erb>"
 end
 
 abort "Error: #{input} is not a .erb file!" unless input.end_with? ".erb"
@@ -25,11 +26,24 @@ abort "Error: #{input} is not a .erb file!" unless input.end_with? ".erb"
 root = File.expand_path root
 input = File.expand_path input
 
-data = IO.read input
-conf = ERB.new(data).result
+# Find extra variables in the form of --extra-val=variable=value
+# Using a hash and ERB#result_with_hash would be nice, but it didn't
+# appear until Ruby 2.5. :/
+variables = binding
+ARGV.delete_if do |argument|
+  next unless argument.start_with? "--extra-val="
+
+  variable, value = argument.sub(/^--extra-val=/, "").split("=", 2)
+  variables.local_variable_set(variable.to_sym, value)
+
+  true
+end
+
+data = File.read input
+conf = ERB.new(data).result(variables)
 output = input.sub(/.erb$/, "")
 output.sub!(/.conf$/, ".root.conf") if root_configuration
-IO.write output, conf
+File.write output, conf
 
 exit if root_configuration
 
@@ -42,69 +56,66 @@ end
 
 exit unless RUBY_PLATFORM.include? "darwin"
 
+homebrew_prefix = RUBY_PLATFORM.include?("arm64") ? "/opt/homebrew" : "/usr/local"
+
 strap_url = ENV["HOMEBREW_STRAP_URL"]
 strap_url ||= "https://strap.githubapp.com"
 
-unless File.exist? "/usr/local/bin/brew"
+unless File.exist? "#{homebrew_prefix}/bin/brew"
   abort <<~EOS
-    Error: Homebrew is not in /usr/local. Install it by running Strap:
+    Error: Homebrew is not in #{homebrew_prefix}. Install it by running Strap:
       #{strap_url}
-EOS
+  EOS
 end
 
 brewfile = <<~EOS
   brew "launchdns", restart_service: true
-  brew "launch_socket_server"
   brew "nginx", restart_service: true
 EOS
 
 started_services = false
 unless system "echo '#{brewfile}' | brew bundle check --file=- >/dev/null"
-  puts "Installing *.dev dependencies:"
+  puts "Installing *.localhost dependencies:"
   unless system "echo '#{brewfile}' | brew bundle --file=-"
-    abort "Error: install *.dev dependencies with brew bundle!"
+    abort "Error: install *.localhost dependencies with brew bundle!"
   end
   started_services = true
 end
 
-if `readlink /etc/resolver 2>/dev/null`.chomp != "/usr/local/etc/resolver"
-  unless system "sudo -n true >/dev/null"
-    puts "Asking for your password to setup *.dev:"
-  end
-  system "sudo rm -rf /etc/resolver"
-  unless system "sudo ln -sf /usr/local/etc/resolver /etc/resolver"
-    abort "Error: failed to symlink /usr/local/etc/resolver to /etc/resolver!"
+if `readlink /etc/resolver 2>/dev/null`.chomp != "#{homebrew_prefix}/etc/resolver"
+  puts "Asking for your password to setup *.dev:" unless system "sudo -n true >/dev/null"
+  system "sudo", "rm", "-rf", "/etc/resolver"
+  unless system "sudo", "ln", "-sf", "#{homebrew_prefix}/etc/resolver", "/etc/resolver"
+    abort "Error: failed to symlink #{homebrew_prefix}/etc/resolver to /etc/resolver!"
   end
 end
 
 if File.exist? "/etc/pf.anchors/dev.strap"
-  unless system "sudo -n true >/dev/null"
-    puts "Asking for your password to uninstall pf:"
-  end
-  system "sudo rm /etc/pf.anchors/dev.strap"
+  puts "Asking for your password to uninstall pf:" unless system "sudo -n true >/dev/null"
+  system "sudo", "rm", "/etc/pf.anchors/dev.strap"
   system "sudo grep -v 'dev.strap' /etc/pf.conf | sudo tee /etc/pf.conf"
   system "sudo launchctl unload /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
   system "sudo launchctl load -w /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
   system "sudo launchctl unload /Library/LaunchDaemons/dev.strap.pf.plist 2>/dev/null"
-  system "sudo rm -f /Library/LaunchDaemons/dev.strap.pf.plist"
+  system "sudo", "rm", "-f", "/Library/LaunchDaemons/dev.strap.pf.plist"
 end
-if `brew services list | grep launch_socket_server | grep started` == ""
-  unless system "sudo -n true > /dev/null"
-    puts "Asking for your password to start launch_socket_server:"
-  end
-  unless system "sudo brew services start launch_socket_server >/dev/null"
-    abort "Error: failed to start launch_socket_server!"
-  end
+launch_socket_server_info = `brew services list | grep launch_socket_server | grep started`.chomp
+if launch_socket_server_info != ""
+  puts "Asking for your password to stop launch_socket_server:" unless system "sudo -n true > /dev/null"
+  command = "brew services stop launch_socket_server >/dev/null"
+  run_by_user = launch_socket_server_info.include?("started #{ENV["USER"]}")
+  command = "sudo #{command}" unless run_by_user
+
+  abort "Error: failed to stop launch_socket_server!" unless system command
 end
 
-server = "/usr/local/etc/nginx/servers/#{name}"
+server_base_path = "#{homebrew_prefix}/etc/nginx/servers"
+system "mkdir -p '#{server_base_path}'"
+server = File.join(server_base_path, name)
 unless system "ln -sf '#{File.absolute_path(output)}' '#{server}'"
   abort "Error: failed to symlink #{output} to #{server}!"
 end
 
-system "brew prune >/dev/null"
-unless started_services
-  unless system "brew services restart nginx >/dev/null"
-    abort "Error: failed to (re)start nginx!"
-  end
-end
+system "brew cleanup --prune-prefix >/dev/null"
+
+abort "Error: failed to (re)start nginx!" if !started_services && !(system "brew services restart nginx >/dev/null")

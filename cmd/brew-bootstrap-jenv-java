@@ -1,0 +1,120 @@
+#!/bin/bash
+#:  `Usage: brew bootstrap-jenv-java` [--debug]
+#:
+#:  Installs Zulu JDK.
+set -e
+
+if [ "$1" = "--debug" ]; then
+  shift
+  PRINT_DEBUG="1"
+  set -x
+fi
+
+warn() { echo "$@" >&2; }
+abort() { EXPECTED_EXIT="1"; warn "$@"; exit 1; }
+
+abort_for_sh() {
+  abort 'Error: add `eval "$(jenv init -)"` to the end of your .bash_profile!'
+}
+
+abort_for_zsh() {
+  abort 'Error: add `eval "$(jenv init -)"` to the end of your .zshrc!'
+}
+
+abort_for_fish() {
+  abort 'Error: check the installation instructions at https://github.com/gcuisinier/jenv#gettings-started!'
+}
+
+abort_with_shell_setup_message() {
+  case $(basename ${SHELL:-bash}) in
+  sh|bash)
+    abort_for_sh
+    ;;
+  zsh)
+    abort_for_zsh
+    ;;
+  fish)
+    abort_for_fish
+    ;;
+  # tcsh users are on their own
+  *)
+    abort 'Error: you must finish setting up jenv in your shell; check `jenv init` for instructions!'
+  esac
+}
+
+abort_with_jenv_path_message() {
+  abort "Error: the $(jenv root)/versions path does not exist. Please create it."
+}
+
+cleanup() {
+  set +e
+  if [ -n "$EXPECTED_EXIT" ]; then
+    return
+  fi
+  warn "Error: $(basename $0) failed!"
+  if [ -z "$PRINT_DEBUG" ]; then
+    warn "For debugging output run:"
+    warn "  $0 --debug"
+    warn "If you're stuck: file an issue with debugging output at:"
+    warn "  https://github.com/github/homebrew-bootstrap/issues/new"
+  fi
+}
+trap "cleanup" EXIT
+
+BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if ! which jenv &>/dev/null; then
+  abort "Error: you need to 'brew install jenv'!"
+fi
+
+if ! [[ -d "$(jenv root)/versions" ]]; then
+  abort_with_jenv_path_message
+fi
+
+if ! jenv version-name &>/dev/null; then
+  if ! [[ -z "$JENV_VERSION" ]]; then
+    JAVA_REQUESTED="$JENV_VERSION"
+  else
+    JAVA_REQUESTED="$(jenv local)"
+  fi
+
+  if ! [[ "$JAVA_REQUESTED" =~ "." ]]; then
+    warn "Error: requested Java version, \"$JAVA_REQUESTED\", is invalid."
+    warn "hint: Java versions must contain a period."
+    abort "hint: For example, instead of \"11\", use \"11.0\"."
+  fi
+
+  # Prior to Java 9, the major version is the second token, e.g. 1.8.0
+  # From Java 9 on, the major version is the first token, e.g. 9.0.0
+  if [[ "$(echo $JAVA_REQUESTED | awk -F. '{ print $1 }')" -ge 9 ]]; then
+    cask_version="$(echo $JAVA_REQUESTED | awk -F. '{ print $1 }')"
+  else
+    cask_version="$(echo $JAVA_REQUESTED | awk -F. '{ print $2 }')"
+  fi
+
+  cask_shortname="zulu${cask_version}"
+  if ! [[ -f "$BASE_PATH/Casks/${cask_shortname}.rb" ]]; then
+    warn "Error: couldn't find a definition for ${cask_shortname}."
+    warn "hint: This script only supports Zulu JVMs."
+    warn "hint: For versions before Java 9, use the 1.x format, i.e. 1.8 or 1.8.0.181"
+    warn "hint: For versions 9 and up, the major version comes first, i.e. 11.0 or 11.0.1"
+    warn "hint: If the requested JVM still can't be found, you may not have requested a supported version."
+    abort "hint: Leave off the leading \"openjdk-\" or \"openjdk64-\"."
+  fi
+
+  cask_name="github/bootstrap/${cask_shortname}"
+  brew bundle --file=- <<-EOS
+tap "github/bootstrap"
+cask "$cask_name"
+EOS
+
+  java_home=$(/usr/libexec/java_home -v $JAVA_REQUESTED)
+  yes | jenv add $java_home
+fi
+
+if [ "$(jenv exec java -version 2>&1)" != "$(java -version 2>&1)" ]; then
+  abort_with_shell_setup_message
+fi
+
+EXPECTED_EXIT="1"
+exit 0

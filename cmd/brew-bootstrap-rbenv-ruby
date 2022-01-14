@@ -1,5 +1,7 @@
 #!/bin/bash
-# Installs Ruby and Bundler.
+#:  `Usage: brew bootstrap-rbenv-ruby` [--debug]
+#:
+#:  Installs Ruby and Bundler.
 set -e
 
 if [ "$1" = "--debug" ]; then
@@ -62,7 +64,11 @@ if ! which rbenv &>/dev/null; then
 fi
 
 if ! rbenv version-name &>/dev/null; then
-  RUBY_REQUESTED="$(rbenv local)"
+  if ! [[ -z "$RBENV_VERSION" ]]; then
+    RUBY_REQUESTED="$RBENV_VERSION"
+  else
+    RUBY_REQUESTED="$(rbenv local)"
+  fi
   RUBY_DEFINITION="$(ruby-build --definitions | grep "^$RUBY_REQUESTED$" || true)"
 
   if [ -z "$RUBY_DEFINITION" ]; then
@@ -74,9 +80,11 @@ if ! rbenv version-name &>/dev/null; then
     fi
   fi
 
-  HOMEBREW_PREFIX="$(brew --prefix)"
-  export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$HOMEBREW_PREFIX/opt/openssl"
-
+  # use workaround for necessary for some Ruby versions
+  # https://github.com/ffi/ffi/issues/869#issuecomment-752123090
+  if [ "$(uname -sm)" = "Darwin arm64" ]; then
+    export RUBY_CFLAGS=-DUSE_FFI_CLOSURE_ALLOC
+  fi
   rbenv install --skip-existing "$RUBY_DEFINITION"
 fi
 
@@ -85,7 +93,14 @@ if [ "$(rbenv exec ruby --version)" != "$(ruby --version)" ]; then
 fi
 
 (rbenv which bundle &>/dev/null && bundle -v &>/dev/null) || {
-  gem install bundler
+  # Bundler 2 doesn't support Ruby 2.x or below, but
+  # Rubygems won't automatically pick a compatible Bundler for us. Boo!
+  if [[ "$RUBY_REQUESTED" < "2.3" ]]; then
+    gem install bundler -v '<2'
+  else
+    gem install bundler
+  fi
+
   rbenv rehash
 }
 

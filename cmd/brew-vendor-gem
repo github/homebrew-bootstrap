@@ -1,10 +1,13 @@
 #!/bin/bash
-#/ Usage: brew vendor-gem [-r <rev>] [-n <gem>] <git-url>
-#/ Build a gem for the given git repository and stick it in vendor/cache. With -r, build
-#/ the gem at the branch, tag, or SHA1 given. With no -r, build the default HEAD.
-#/
-#/ This command is used in situations where you'd typically use a :git bundler
-#/ source, but allows for caching in vendor.
+
+#:  `Usage: brew vendor-gem` [-r <rev>] [-n <gem>] <git-url>
+#:
+#:  Build a gem for the given git repository and stick it in vendor/cache. With -r, build
+#:  the gem at the branch, tag, or SHA1 given. With no -r, build the default
+#:  HEAD.
+#:
+#:  This command is used in situations where you'd typically use a :git bundler
+#:  source, but allows for caching in vendor.
 set -e
 [ $# -eq 0 ] && set -- --help
 
@@ -21,7 +24,7 @@ while [ $# -gt 0 ]; do
                         shift 2
                         ;;
                 -h|--help)
-                        grep ^#/ <"$0" |cut -c4-
+                        grep ^#: <"$0" |cut -c5-
                         exit
                         ;;
                 *)

@@ -1,0 +1,65 @@
+#!/bin/bash
+#:  `Usage: brew macos-vscode-codespaces`
+#:
+#:  Get Visual Studio Code ready for running with Codespaces.
+
+set -eo pipefail
+
+if [ "$(uname -s)" != "Darwin" ]; then
+  echo 'Error: brew macos-vscode-codespaces should only be run on macOS!' >&2
+  exit 1
+fi
+
+# Check for Homebrew.
+if [ ! -x "$(command -v brew 2>/dev/null)" ]; then
+  echo 'Error: Homebrew is not installed. Run https://strap.githubapp.com first.' >&2
+  exit 1
+fi
+
+HOMEBREW_PREFIX="$(brew --prefix)"
+HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/usr/local}"
+
+# Link launchdns' configuration.
+if [ "$(readlink /etc/resolver)" != "${HOMEBREW_PREFIX}/etc/resolver" ] ||
+   [ ! -L "/etc/resolver" ]; then
+  if ! sudo -n true >/dev/null; then
+    echo "We need your user's password to link /etc/resolver with sudo:"
+    /usr/bin/sudo -v 2>/dev/null
+  fi
+  echo "==> Linking ${HOMEBREW_PREFIX}/etc/resolver to /etc/resolver"
+  sudo rm -rf /etc/resolver
+  sudo ln -s "${HOMEBREW_PREFIX}/etc/resolver" /etc
+fi
+
+# Install launchdns and VS Code.
+brew bundle --quiet --file=- <<RUBY
+brew "launchdns", restart_service: true
+cask "visual-studio-code" unless File.exist?("/Applications/Visual Studio Code.app")
+RUBY
+
+# Stop nginx (if it is already running).
+if launchctl list | grep -q nginx; then
+  brew services stop nginx
+fi
+
+
+# Install VS Code extensions.
+PATH="${HOMEBREW_PREFIX}/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:$PATH"
+INSTALLED_EXTENSIONS="$(code --list-extensions)"
+NEEDED_EXTENSIONS=$(cat <<'EOS'
+GitHub.codespaces
+EOS
+)
+
+for EXTENSION in $NEEDED_EXTENSIONS
+do
+  if echo "$INSTALLED_EXTENSIONS" | grep -q "$EXTENSION"
+  then
+    continue
+  fi
+
+  code --install-extension "$EXTENSION"
+done
+
+# Run VS Code.
+open -b com.microsoft.VSCode
