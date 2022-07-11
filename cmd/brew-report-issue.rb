@@ -17,8 +17,7 @@ unless close
   body = $stdin.read
 end
 
-@strap_url = ENV["HOMEBREW_STRAP_URL"]
-@strap_url ||= "https://strap.githubapp.com"
+@strap_url = ENV.fetch("HOMEBREW_STRAP_URL", "https://strap.githubapp.com")
 
 if `git config credential.helper`.chomp.empty?
   abort <<~EOS

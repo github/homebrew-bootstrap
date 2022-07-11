@@ -58,8 +58,7 @@ exit unless RUBY_PLATFORM.include? "darwin"
 
 homebrew_prefix = RUBY_PLATFORM.include?("arm64") ? "/opt/homebrew" : "/usr/local"
 
-strap_url = ENV["HOMEBREW_STRAP_URL"]
-strap_url ||= "https://strap.githubapp.com"
+strap_url = ENV.fetch("HOMEBREW_STRAP_URL", "https://strap.githubapp.com")
 
 unless File.exist? "#{homebrew_prefix}/bin/brew"
   abort <<~EOS
@@ -103,7 +102,7 @@ launch_socket_server_info = `brew services list | grep launch_socket_server | gr
 if launch_socket_server_info != ""
   puts "Asking for your password to stop launch_socket_server:" unless system "sudo -n true > /dev/null"
   command = "brew services stop launch_socket_server >/dev/null"
-  run_by_user = launch_socket_server_info.include?("started #{ENV["USER"]}")
+  run_by_user = launch_socket_server_info.include?("started #{ENV.fetch("USER", "(unknown user)")}")
   command = "sudo #{command}" unless run_by_user
 
   abort "Error: failed to stop launch_socket_server!" unless system command
