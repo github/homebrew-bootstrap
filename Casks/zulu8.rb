@@ -8,8 +8,6 @@ cask "zulu8" do
   desc "OpenJDK distribution from Azul"
   homepage "https://www.azul.com/downloads/zulu/zulu-mac/"
 
-  depends_on macos: ">= :yosemite"
-
   pkg "Double-Click to Install Zulu #{version.major}.pkg"
 
   uninstall pkgutil: "com.azulsystems.zulu.#{version.major}"
