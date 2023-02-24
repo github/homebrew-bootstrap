@@ -20,9 +20,7 @@ Or `brew tap github/bootstrap` and then `brew install <formula>`.
 
 ## Status
 
-In active development.
-
-[@MikeMcQuaid](https://github.com/MikeMcQuaid/)
+No longer in active development.
 
 ## License
 
